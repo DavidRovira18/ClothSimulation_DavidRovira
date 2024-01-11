@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
-import * as CANNON from 'cannon-es';
+import { OrbitControls } from "three/addons/controls/OrbitControls.js"
+import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js';
 
 //Set up scene
 const scene = new THREE.Scene();
@@ -33,7 +33,7 @@ const particles = [];
 
 //Create cloth mesh
 const cloth_geometry = new THREE.PlaneGeometry(10,10,Nx,Ny);
-const cloth_mat = new THREE.MeshBasicMaterial({ color: 0x9b9b9b, side: THREE.DoubleSide, wireframe: false });
+const cloth_mat = new THREE.MeshBasicMaterial({ color: 0x9b9b9b, side: THREE.DoubleSide, wireframe: true });
 const cloth = new THREE.Mesh(cloth_geometry, cloth_mat);
 
 
