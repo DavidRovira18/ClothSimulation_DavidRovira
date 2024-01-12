@@ -4,7 +4,6 @@ import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js';
 
 //Set up scene
 const scene = new THREE.Scene();
-console.log(scene);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -38,8 +37,12 @@ const cloth_geometry = new THREE.PlaneGeometry(10,10,Nx,Ny);
 const cloth_mat = new THREE.MeshBasicMaterial({ color: 0x9b9b9b, side: THREE.DoubleSide, wireframe: true });
 const cloth = new THREE.Mesh(cloth_geometry, cloth_mat);
 
-
 scene.add(cloth)
+
+// Variables for user interaction
+let mouse = new THREE.Vector2();
+let raycaster = new THREE.Raycaster();
+let selectedParticle = null;
 
 //Create Cannon bodies for each particle in a grid
 for(let i = 0; i < Nx + 1; ++i) {
@@ -60,6 +63,8 @@ for(let i = 0; i < Nx + 1; ++i) {
         particleMesh.position.copy(particle_position);
         scene.add(particleMesh);
         particles_mesh[i].push(particleMesh);
+
+        cloth.add(particleMesh); //Add particle mesh as cloth children
     }
 }
 
@@ -112,3 +117,47 @@ window.addEventListener('resize', function() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+window.addEventListener('mousemove', onMouseMove);
+
+function onMouseMove(event) {
+    // Calculate normalized coordinates [-1,1]
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1; 
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Update the raycaster
+    raycaster.setFromCamera(mouse, camera); //Screen coords to clip coords
+
+    // Find the nearest particle
+    const nearest_particle = findNearestParticle();
+
+    //Reset particles mesh color
+    particles_mesh.flat().forEach(mesh => {
+        mesh.material.color.set(0x9b9b9b);
+    });
+
+    if (nearest_particle) {
+        nearest_particle.material.color.set(0xff0000); //Debug purposes set particle to red
+    }
+}
+
+
+function findNearestParticle() {
+    let nearest_distance = Infinity;
+    let nearest_particle = null;
+
+    const flat_particles_mesh = particles_mesh.flat();
+
+    for (const particle_mesh of flat_particles_mesh) {
+
+        const screen_position = particle_mesh.position.clone().project(camera); //Convert 3D position to 2D        
+        const distance = new THREE.Vector2(screen_position.x - mouse.x, screen_position.y - mouse.y).length(); //Find the distance between the mouse position and the particle position
+        
+        if (distance < nearest_distance) {
+            nearest_distance = distance;
+            nearest_particle = particle_mesh;
+        }
+    }
+
+    return nearest_particle;
+}
