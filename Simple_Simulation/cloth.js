@@ -4,6 +4,7 @@ import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js';
 
 //Set up scene
 const scene = new THREE.Scene();
+console.log(scene);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -30,6 +31,7 @@ const dist = cloth_size / Nx; //Distance between each pair of particles
 
 const shape = new CANNON.Particle(); //Instance to Cannon particle class
 const particles = [];
+const particles_mesh = []; //Mesh of particles (to visualize particles DEBUG purposes)
 
 //Create cloth mesh
 const cloth_geometry = new THREE.PlaneGeometry(10,10,Nx,Ny);
@@ -42,15 +44,22 @@ scene.add(cloth)
 //Create Cannon bodies for each particle in a grid
 for(let i = 0; i < Nx + 1; ++i) {
     particles.push([]);
+    particles_mesh.push([]);
     for(let j = 0; j < Ny + 1; ++j) {
+        var particle_position = new THREE.Vector3((i - Nx * 0.5) * dist, (j - Ny * 0.5) * dist, 0);
         const particle = new CANNON.Body({
             mass: j === Ny ? 0 : mass, //Set the first row mass to 0 as it was attached to somewhere
             shape,
-            position: new THREE.Vector3((i - Nx * 0.5) * dist, (j - Ny * 0.5) * dist, 0),
+            position: particle_position,
             velocity: new THREE.Vector3(0, 0, 0.5)
         });
         particles[i].push(particle);
         world.addBody(particle);
+
+        const particleMesh = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshBasicMaterial({ color: 0x9b9b9b }));
+        particleMesh.position.copy(particle_position);
+        scene.add(particleMesh);
+        particles_mesh[i].push(particleMesh);
     }
 }
 
@@ -81,6 +90,10 @@ function updateParticles(){
 
             position_attribute.setXYZ(index, position.x, position.y, position.z); //Set position to match the cannon particle position
             position_attribute.needsUpdate = true; //Crucial when we want to change coordinates of a geometry 
+
+            var particle = particles_mesh[i][Ny-j]; //Get particle mesh to update the position
+            particle.position.copy(position);
+            particle.position.needsUpdate = true;
         }
     }
 }
