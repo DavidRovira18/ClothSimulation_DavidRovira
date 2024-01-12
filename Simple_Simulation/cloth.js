@@ -16,7 +16,7 @@ const timeStep = 1/60;
 
 //Set up camera and controls
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 10;
+camera.position.z = 2;
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
@@ -42,7 +42,7 @@ scene.add(cloth)
 // Variables for user interaction
 let mouse = new THREE.Vector2();
 let raycaster = new THREE.Raycaster();
-let selectedParticle = null;
+let selected_particle = null;
 
 //Create Cannon bodies for each particle in a grid
 for(let i = 0; i < Nx + 1; ++i) {
