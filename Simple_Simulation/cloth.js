@@ -40,9 +40,17 @@ const cloth = new THREE.Mesh(cloth_geometry, cloth_mat);
 scene.add(cloth)
 
 // Variables for user interaction
-let mouse = new THREE.Vector2();
-let raycaster = new THREE.Raycaster();
-let selected_particle = null;
+var mouse = new THREE.Vector2();
+var raycaster = new THREE.Raycaster();
+var selected_particle = null;
+
+var particles_visible = true;
+
+var button_toggle_wireframe = document.getElementById("t_wireframe");
+var button_toggle_particles = document.getElementById("t_particles");
+
+button_toggle_wireframe.addEventListener("click", toggleWireframe);
+button_toggle_particles.addEventListener("click", toggleParticleMesh);
 
 //Create Cannon bodies for each particle in a grid
 for(let i = 0; i < Nx + 1; ++i) {
@@ -160,4 +168,16 @@ function findNearestParticle() {
     }
 
     return nearest_particle;
+}
+
+function toggleWireframe(){
+    cloth.material.wireframe = cloth.material.wireframe ? !cloth.material.wireframe : cloth.material.wireframe = true; 
+}
+
+function toggleParticleMesh(){
+    particles_visible = particles_visible ? !particles_visible : particles_visible = true;
+    const flat_particles_mesh = particles_mesh.flat();
+    for (const particle_mesh of flat_particles_mesh) {
+        particle_mesh.visible = particles_visible;
+    }
 }
