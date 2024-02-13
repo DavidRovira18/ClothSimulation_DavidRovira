@@ -45,12 +45,20 @@ var raycaster = new THREE.Raycaster();
 var selected_particle = null;
 
 var particles_visible = true;
+var cloth_attached = true;
 
 var button_toggle_wireframe = document.getElementById("t_wireframe");
 var button_toggle_particles = document.getElementById("t_particles");
+var button_toggle_attached = document.getElementById("t_attached");
 
 button_toggle_wireframe.addEventListener("click", toggleWireframe);
 button_toggle_particles.addEventListener("click", toggleParticleMesh);
+button_toggle_attached.addEventListener("click", toggleAttached);
+
+//init application
+button_toggle_wireframe.checked = cloth.material.wireframe;
+button_toggle_particles.checked = particles_visible;
+button_toggle_attached.checked = cloth_attached;
 
 //Create Cannon bodies for each particle in a grid
 for(let i = 0; i < Nx + 1; ++i) {
@@ -59,7 +67,7 @@ for(let i = 0; i < Nx + 1; ++i) {
     for(let j = 0; j < Ny + 1; ++j) {
         var particle_position = new THREE.Vector3((i - Nx * 0.5) * dist, (j - Ny * 0.5) * dist, 0);
         const particle = new CANNON.Body({
-            mass: j === Ny ? 0 : mass, //Set the first row mass to 0 as it was attached to somewhere
+            mass: cloth_attached ? (j === Ny ? 0 : mass) : mass, //If attached set the first row mass to 0 as it was attached to somewhere
             shape,
             position: particle_position,
             velocity: new THREE.Vector3(0, 0, 0.5)
@@ -139,6 +147,9 @@ function onMouseMove(event) {
     // Find the nearest particle
     const nearest_particle = findNearestParticle();
 
+    if(!button_toggle_particles.checked)
+        return;
+
     //Reset particles mesh color
     particles_mesh.flat().forEach(mesh => {
         mesh.material.color.set(0x9b9b9b);
@@ -172,6 +183,7 @@ function findNearestParticle() {
 
 function toggleWireframe(){
     cloth.material.wireframe = cloth.material.wireframe ? !cloth.material.wireframe : cloth.material.wireframe = true; 
+    button_toggle_wireframe.checked = cloth.material.wireframe;
 }
 
 function toggleParticleMesh(){
@@ -179,5 +191,30 @@ function toggleParticleMesh(){
     const flat_particles_mesh = particles_mesh.flat();
     for (const particle_mesh of flat_particles_mesh) {
         particle_mesh.visible = particles_visible;
+    }
+
+    button_toggle_particles.checked = particles_visible;
+}
+
+function toggleAttached(){
+    cloth_attached = cloth_attached ? !cloth_attached : cloth_attached = true; 
+    button_toggle_attached.checked = cloth_attached;
+
+    for (let i = 0; i < Nx + 1; ++i) {
+        for (let j = 0; j < Ny + 1; ++j) {
+            particles[i][j].mass = cloth_attached ? (j === Ny ? 0 : mass) : mass; //If attached set the first row mass to 0 as it was attached to somewhere
+        }
+    }
+
+    // Reapply world constraints to reflect the change in particle masses
+    world.constraints.length = 0; // Clear existing constraints
+
+    for(let i = 0; i < Nx + 1; ++i) {
+        for(let j = 0; j < Ny + 1; ++j) {
+            if(i < Nx)
+                connect(i, j, i+1, j)
+            if(j < Ny)
+                connect(i, j, i, j+1)
+        }
     }
 }
