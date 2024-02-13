@@ -137,7 +137,7 @@ window.addEventListener('resize', function() {
 window.addEventListener('mousemove', onMouseMove);
 
 function onMouseMove(event) {
-    // Calculate normalized coordinates [-1,1]
+    // Calculate normalized coordinates [-1,1] (NDC)
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1; 
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -161,7 +161,7 @@ function onMouseMove(event) {
 }
 
 
-function findNearestParticle() {
+function findNearestParticle() { //Find the nearest particle to the mouse
     let nearest_distance = Infinity;
     let nearest_particle = null;
 
@@ -181,12 +181,12 @@ function findNearestParticle() {
     return nearest_particle;
 }
 
-function toggleWireframe(){
+function toggleWireframe(){ //Enable disable wireframe
     cloth.material.wireframe = cloth.material.wireframe ? !cloth.material.wireframe : cloth.material.wireframe = true; 
     button_toggle_wireframe.checked = cloth.material.wireframe;
 }
 
-function toggleParticleMesh(){
+function toggleParticleMesh(){ //Show particle meshes
     particles_visible = particles_visible ? !particles_visible : particles_visible = true;
     const flat_particles_mesh = particles_mesh.flat();
     for (const particle_mesh of flat_particles_mesh) {
