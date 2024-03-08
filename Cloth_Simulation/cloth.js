@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
 var CLOTHSIM = {
     init: function(){
@@ -16,8 +17,35 @@ var CLOTHSIM = {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.25;
 
+        //OBJ Loader
+        this.loader = new OBJLoader();
+        this.loader.load(
+            // resource URL
+            'models/cloth.obj',
+            // called when resource is loaded
+            function ( object ) {
+        
+                this.scene.add( object );
+        
+            },
+            // called when loading is in progresses
+            function ( xhr ) {
+        
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        
+            },
+            // called when loading has errors
+            function ( error ) {
+        
+                console.log( 'An error happened' );
+        
+            }
+        )
+
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
     }
 }
+
+init();
