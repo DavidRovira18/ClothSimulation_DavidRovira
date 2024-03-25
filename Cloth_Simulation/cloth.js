@@ -18,6 +18,7 @@ var CLOTHSIM = {
         this.controls.dampingFactor = 0.25;
 
         //OBJ Loader
+        this.self = this; //reference to this
         this.loader = new OBJLoader();
         this.loader.load(
             // resource URL
@@ -25,7 +26,7 @@ var CLOTHSIM = {
             // called when resource is loaded
             function ( object ) {
         
-                this.scene.add( object );
+                self.scene.add( object );
         
             },
             // called when loading is in progresses
