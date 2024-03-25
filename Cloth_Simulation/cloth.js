@@ -48,4 +48,4 @@ var CLOTHSIM = {
     }
 }
 
-init();
+CLOTHSIM.init();
