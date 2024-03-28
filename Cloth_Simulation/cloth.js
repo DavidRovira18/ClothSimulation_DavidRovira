@@ -66,10 +66,9 @@ var CLOTHSIM = {
     loop: function ()
     {
         var self = CLOTHSIM;
-        self.renderer.render(self.scene, self.camera);
-        
         self.controls.update();
 
+        self.renderer.render(self.scene, self.camera);
         
         requestAnimationFrame(self.loop);
     }
