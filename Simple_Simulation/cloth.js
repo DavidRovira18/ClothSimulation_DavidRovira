@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
-import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js';
+import * as CANNON from '../node_modules/cannon-es/dist/cannon-es.js';
 
 //Set up scene
 const scene = new THREE.Scene();
