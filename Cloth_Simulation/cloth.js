@@ -46,6 +46,8 @@ var CLOTHSIM = {
             'cloth_v3.obj',
             // called when resource is loaded
             ( object ) => {
+                if (object.children[0] instanceof THREE.Mesh)
+                    object.children[0].material.side = THREE.DoubleSide;
                 this.scene.add( object );
             },
             // called when loading is in progress
