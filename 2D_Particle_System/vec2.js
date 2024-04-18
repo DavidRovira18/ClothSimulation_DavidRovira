@@ -62,4 +62,9 @@ class vec2
         var vec = new vec2(pt.x - this.x, pt.y - this.y);
         return vec.length()
     }
+
+    clone() //Clone vector 
+    {
+        return new vec2(this.x, this.y);
+    }
 }

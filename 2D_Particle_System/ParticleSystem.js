@@ -58,24 +58,43 @@ class ParticleSystem{
         this.particles.forEach((particle) => particle.render(ctx));
     }
 
+    // update(dt)
+    // {
+    //     //Clear forces
+    //     this.particles.forEach((particle) => particle.clearForce());
+
+    //     //Apply gravity
+    //     this.applyGravityForce();
+        
+    //     //Euler integrator
+    //     this.particles.forEach((particle) => EulerIntegrator(particle, dt))
+    // }
+
+    // applyGravityForce() //Apply gravity force to each particle of the system
+    // {
+    //     for (var particle of this.particles) {
+    //         const mass = particle.mass;
+    //         particle.applyForce(new vec2(0, 9.81 * mass));
+    //     }
+
+    // }
+
     update(dt)
     {
-        //Clear forces
-        this.particles.forEach((particle) => particle.clearForce());
+        this.particles.forEach((particle) => {
+            //Store current velocity
+            const current_vel = particle.vel.clone();
 
-        //Apply gravity
-        this.applyGravityForce();
-        
-        //Euler integrator
-        this.particles.forEach((particle) => EulerIntegrator(particle, dt))
-    }
+            //Clear acting forces 
+            particle.clearForce();
 
-    applyGravityForce() //Apply gravity force to each particle of the system
-    {
-        for (var particle of this.particles) {
-            const mass = particle.mass;
-            particle.applyForce(new vec2(0, 9.81 * mass));
-        }
+            particle.vel = current_vel;
 
+            //Apply gravity force
+            particle.applyForce(new vec2(0, 9.81 * particle.mass));
+
+            //Euler integrator
+            EulerIntegrator(particle, dt);
+        })
     }
 }
