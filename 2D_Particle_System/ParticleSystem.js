@@ -82,13 +82,8 @@ class ParticleSystem{
     update(dt)
     {
         this.particles.forEach((particle) => {
-            //Store current velocity
-            const current_vel = particle.vel.clone();
-
             //Clear acting forces 
             particle.clearForce();
-
-            particle.vel = current_vel;
 
             //Apply gravity force
             particle.applyForce(new vec2(0, 9.81 * particle.mass));
