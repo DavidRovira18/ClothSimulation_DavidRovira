@@ -15,8 +15,8 @@ class Particle{
     {
         if (!(force instanceof vec2))
             console.error("Force is not a vec2");
-
-        this.f.add(force)
+        
+        this.f.add(force);
     }
 
     clearForce()

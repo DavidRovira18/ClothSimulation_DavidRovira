@@ -6,7 +6,7 @@ ctx.canvas.height = window.innerHeight;
 
 const particleSystem = new ParticleSystem();
 
-particles_mass = 1;
+particles_mass = 10;
 canvas.addEventListener("click", (event) => {
     particleSystem.addParticle(particles_mass, new vec2(event.clientX, event.clientY));
   });

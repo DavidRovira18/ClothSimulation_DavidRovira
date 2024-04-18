@@ -8,8 +8,9 @@ class vec2
 
     fromArray(v) //Creates a vector from an array
     {
-        this.x = v.x;
-        this.y = v.y;
+        this.x = v[0];
+        this.y = v[1];
+        return this;
     }
 
     add(v) //Adds another vector to this one
