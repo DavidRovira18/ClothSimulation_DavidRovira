@@ -11,14 +11,14 @@ canvas.addEventListener("click", (event) => {
     particleSystem.addParticle(particles_mass, new vec2(event.clientX, event.clientY));
   });
 
-var dt = 0;
+var dt = 0.5;
 var elapsed_dt = 0;
 
 function update()
 {
-    var currentElapsed_dt = performance.now();
-    dt = (currentElapsed_dt - elapsed_dt) / 1000;
-    elapsed_dt = currentElapsed_dt;
+    // var currentElapsed_dt = performance.now();
+    // dt = (currentElapsed_dt - elapsed_dt) / 1000;
+    // elapsed_dt = currentElapsed_dt;
 
     particleSystem.update(dt);
 }
