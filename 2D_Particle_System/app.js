@@ -11,7 +11,7 @@ canvas.addEventListener("click", (event) => {
     particleSystem.addParticle(particles_mass, new vec2(event.clientX, event.clientY));
   });
 
-var dt = 0.5;
+var dt = 1/60;
 var elapsed_dt = 0;
 
 function update()
