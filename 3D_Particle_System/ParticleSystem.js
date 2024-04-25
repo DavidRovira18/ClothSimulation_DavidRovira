@@ -1,5 +1,7 @@
 //3D particle system implementation
 import { Vector3, SphereGeometry, MeshBasicMaterial, Mesh } from "three";
+import { EulerIntegrator, SemiImplicitEulerIntegrator } from './integrators.js';
+
 export class Particle{
     constructor(mass, pos, scene)
     {
@@ -31,6 +33,20 @@ export class Particle{
     {
         this.f.fromArray([0,0,0]);
     }
+
+    update(dt)
+    {
+        //Clear acting forces 
+        this.clearForce();
+
+        //Apply gravity force
+        this.applyForce(new Vector3(0, 9.81 * this.mass, 0));
+
+        //Euler integrator
+        SemiImplicitEulerIntegrator(this, dt);
+
+        this.mesh.translateOnAxis(this.pos, 1);
+    }
 }
 
 export class ParticleSystem{
@@ -59,14 +75,7 @@ export class ParticleSystem{
     update(dt)
     {
         this.particles.forEach((particle) => {
-            //Clear acting forces 
-            particle.clearForce();
-
-            //Apply gravity force
-            particle.applyForce(new Vector3(0, 9.81 * particle.mass, 0));
- 
-            //Euler integrator
-            SemiImplicitEulerIntegrator(particle, dt);
+            particle.update(dt);
         })
     }
 }

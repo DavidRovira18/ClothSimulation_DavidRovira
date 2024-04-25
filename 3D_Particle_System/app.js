@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ParticleSystem } from './ParticleSystem.js';
-import { EulerIntegrator, SemiImplicitEulerIntegrator } from './integrators.js';
 
 var PARTICLE_SYSTEM = {
     init: function(){
@@ -10,6 +9,13 @@ var PARTICLE_SYSTEM = {
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
+
+        //Add ground
+        var planeGeometry = new THREE.PlaneGeometry(100, 100); 
+        var planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); 
+        this.ground = new THREE.Mesh(planeGeometry, planeMaterial);
+        this.ground.rotation.x = -Math.PI / 2;
+        this.scene.add(this.ground);
 
         //Add ambiental light
         this.ambient_light = new THREE.AmbientLight(0x404040); // soft white light
@@ -33,6 +39,7 @@ var PARTICLE_SYSTEM = {
         //Set up camera and controls
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.z = 20;
+        this.camera.position.y = 30;
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.enableZooming = true;
@@ -40,6 +47,14 @@ var PARTICLE_SYSTEM = {
 
         //Init particle system
         this.particleSystem = new ParticleSystem(this.scene);
+
+        //Init clock
+        this.clock = new THREE.Clock();
+
+        //Delta time computation (temporal)
+        this.currentTime = performance.now();
+        this.dt = 1/60;
+
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
@@ -50,7 +65,20 @@ var PARTICLE_SYSTEM = {
     loop: function ()
     {
         var self = PARTICLE_SYSTEM;
+
+        //var deltaTime = self.clock.getDelta();
         self.controls.update();
+
+        var newTime = performance.now();
+        var frameTime = newTime - self.currentTime;
+        self.currentTime = newTime;
+
+        while(frameTime > 0.0)
+        {
+            var deltaTime = Math.min(frameTime, self.dt);
+            self.particleSystem.update(deltaTime);
+            frameTime -= deltaTime;
+        }
 
         self.renderer.render(self.scene, self.camera);
         
@@ -73,7 +101,6 @@ var PARTICLE_SYSTEM = {
 
         var pos = new THREE.Vector3().copy(intersection);
 
-        console.log(pos)
         self.particleSystem.addParticle(10, pos);
 
         console.log("Particle Added")
