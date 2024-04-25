@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Particle System</title>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../node_modules/three/build/three.module.js",
+                "three/addons/": "../node_modules/three/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<style>
+    body{
+        margin:0;
+    }
+
+    canvas{
+        display: block;
+    }
+</style>
+<body>
+    <script type="module" src="integrators.js"></script>
+    <script type="module" src="ParticleSystem.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
