@@ -12,15 +12,24 @@ canvas.addEventListener("click", (event) => {
   });
 
 var dt = 1/60;
-var elapsed_dt = 0;
+
+var currentTime = performance.now();
 
 function update()
 {
     // var currentElapsed_dt = performance.now();
     // dt = (currentElapsed_dt - elapsed_dt) / 1000;
     // elapsed_dt = currentElapsed_dt;
+    var newTime = performance.now();
+    var frameTime = newTime - currentTime;
+    currentTime = newTime;
 
-    particleSystem.update(dt);
+    while(frameTime > 0.0)
+    {
+        var deltaTime = Math.min(frameTime, dt);
+        particleSystem.update(deltaTime);
+        frameTime -= deltaTime;
+    }
 }
 
 function render()
