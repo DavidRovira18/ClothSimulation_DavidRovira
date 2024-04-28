@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ParticleSystem } from './ParticleSystem.js';
+import { particleIntersectsPlane } from './collisions.js';
 
 var PARTICLE_SYSTEM = {
     init: function(){
@@ -12,10 +13,13 @@ var PARTICLE_SYSTEM = {
 
         //Add ground
         var planeGeometry = new THREE.PlaneGeometry(100, 100); 
-        var planeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); 
+        var planeMaterial = new THREE.MeshBasicMaterial({ color: "darkgreen", side: THREE.DoubleSide }); 
         this.ground = new THREE.Mesh(planeGeometry, planeMaterial);
         this.ground.rotation.x = -Math.PI / 2;
         this.scene.add(this.ground);
+
+        this.groundBB = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3()); //Ground BoundingBox for collisions
+        this.groundBB.setFromObject(this.ground);
 
         //Add ambiental light
         this.ambient_light = new THREE.AmbientLight(0x404040); // soft white light
@@ -77,8 +81,17 @@ var PARTICLE_SYSTEM = {
         {
             var deltaTime = Math.min(frameTime, self.dt);
             self.particleSystem.update(deltaTime);
+
+            //Check collisions
+            self.particleSystem.particles.forEach(particle => {
+                if(particleIntersectsPlane(particle.BB, self.groundBB))
+                    particle.grounded = true;
+            });
+            
             frameTime -= deltaTime;
         }
+
+
 
         self.renderer.render(self.scene, self.camera);
         

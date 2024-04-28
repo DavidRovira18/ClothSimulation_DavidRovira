@@ -1,5 +1,5 @@
 //3D particle system implementation
-import { Vector3, SphereGeometry, MeshBasicMaterial, Mesh } from "three";
+import { Vector3, SphereGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from './integrators.js';
 
 export class Particle{
@@ -19,6 +19,9 @@ export class Particle{
         scene.add(this.mesh);
 
         this.mesh.translateOnAxis(pos, 1);
+
+        this.BB = new Sphere(this.pos, 1); //BoundingSphere for collisions
+        this.grounded = false;
     }
 
     applyForce(force)
@@ -36,16 +39,20 @@ export class Particle{
 
     update(dt)
     {
+        if (this.grounded) return;
+
         //Clear acting forces 
         this.clearForce();
 
         //Apply gravity force
-        this.applyForce(new Vector3(0, 9.81 * this.mass, 0));
+        this.applyForce(new Vector3(0, -9.81 * this.mass, 0));
 
         //Euler integrator
         SemiImplicitEulerIntegrator(this, dt);
 
-        this.mesh.translateOnAxis(this.pos, 1);
+        //Update mesh and BoundingBox position
+        this.mesh.position.copy(this.pos);
+        this.BB.center.copy(this.pos);
     }
 }
 
