@@ -1,6 +1,7 @@
 //3D particle system implementation
-import { Vector3, SphereGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
+import { Vector3, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from './integrators.js';
+import { SpringForce } from "./SpringForce.js";
 
 export class Particle{
     constructor(mass, pos, scene)
@@ -56,12 +57,39 @@ export class Particle{
     }
 }
 
+export class Spring{
+    constructor(particle1, particle2, stifness, damping, scene)
+    {
+        this.particle1 = particle1;
+        this.particle2 = particle2;
+        this.ks = stifness;
+        this.kd = damping;
+
+        this.r = particle1.pos.distanceTo(particle2.pos); //Resting length
+
+        //Spring mesh
+        const springGeometry = new CylinderGeometry(0.05, 0.05, this.restLength, 8);
+        const springMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
+        this.springMesh = new Mesh(springGeometry, springMaterial);
+
+        // Compute rotation for the cylinder to align with the line between particles
+        const direction = new Vector3().copy(particle2.pos).sub(particle1.pos).normalize();
+        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
+        const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction);
+        this.springMesh.quaternion.copy(quaternion);
+
+        scene.add(this.springMesh);
+
+        //Init Spring Force
+        this.springForce = new SpringForce(this.particle1, this.particle2, this.ks, this.kd, this.r);
+    }
+}
+
 export class ParticleSystem{
     constructor(scene)
     {
         this.particles = [];
         this.forces = [];
-        this.time = null; //NOSE PERQUE ENCARA
 
         this.scene = scene;
     }
@@ -84,6 +112,29 @@ export class ParticleSystem{
         this.particles.forEach((particle) => {
             particle.update(dt);
         })
+    }
+}
+
+export class SpringMassSystem extends ParticleSystem{
+    constructor(scene)
+    {
+        super(scene)
+        this.springs = [];
+    }
+
+    addSpring(particle1, particle2, stifness, damping) //Create spring between particles
+    {
+        this.springs.push(new Spring(particle1, particle2, stifness, damping, scene));
+    }
+
+    update(dt) {
+        // Update particle system
+        super.update(dt);
+
+        // Update springs
+        this.springs.forEach((spring) => {
+            spring.update(dt);
+        });
     }
 }
 
