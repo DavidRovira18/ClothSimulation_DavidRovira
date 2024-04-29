@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { ParticleSystem } from './ParticleSystem.js';
+import { ParticleSystem, SpringMassSystem } from './ParticleSystem.js';
 import { particleIntersectsPlane } from './collisions.js';
 
 var PARTICLE_SYSTEM = {
@@ -67,8 +67,9 @@ var PARTICLE_SYSTEM = {
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
+        this.selectedParticle = undefined;
 
-        this.renderer.domElement.addEventListener('click', this.addParticle);
+        this.renderer.domElement.addEventListener('click', this.handleClick);
     },
 
     loop: function ()
@@ -103,18 +104,8 @@ var PARTICLE_SYSTEM = {
         requestAnimationFrame(self.loop);
     },
 
-    addParticle: function(event)
+    addParticle: function()
     {
-        var self = PARTICLE_SYSTEM;
-
-        if (self.currentScene == self.scene2) return;
-
-        //Normalized coordinates of the mousse
-        self.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        self.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        self.raycaster.setFromCamera(self.mouse, self.camera);
-
         var intersection = new THREE.Vector3();
         self.raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), intersection);
 
@@ -125,22 +116,51 @@ var PARTICLE_SYSTEM = {
         self.particleSystem.addParticle(10, pos);
 
         console.log("Particle Added")
+
+        if(self.currentScene == self.scene2)
+        {
+            const particles = self.particleSystem.particles;
+            self.particleSystem.addSpring(particles[particles.length - 2], particles[particles.length - 1], 1, 0.1);
+        }
+    },
+
+    handleClick: function(event)
+    {
+        var self = PARTICLE_SYSTEM;
+        
+        //Normalized coordinates of the mousse
+        self.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        self.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        self.raycaster.setFromCamera(self.mouse, self.camera);
+
+        const intersections = self.raycaster.intersectObjects(self.particleSystem.particles.map(particle => particle.mesh));
+
+        if(intersections.length > 0)
+        {
+            // If there's an intersection, select the first particle (closest to the camera)
+            self.selectedParticle = intersections[0].object;
+            return;
+        }
+
+        else
+            self.addParticle();
     }
 }
 
 var self = PARTICLE_SYSTEM;
 
 document.addEventListener('keydown', function(event) {
-    
-    self.particleSystem.particles.forEach(particle => {
-        self.currentScene.remove(particle.mesh);
-    })
 
     if (event.key === 'k')
     {
         self.currentScene = self.scene2; // Switch to scene2 if k is pressed
-        self.particleSystem = new ParticleSystem(self.scene2)
-        console.log(self.currentScene)
+        self.particleSystem = new SpringMassSystem(self.scene2)
+
+        //Set the first two particles to create the system
+        self.particleSystem.addParticle(10, new THREE.Vector3(10,10,10));
+        self.particleSystem.addParticle(10, new THREE.Vector3(10,10,20));
+        self.particleSystem.addSpring(self.particleSystem.particles[0], self.particleSystem.particles[1], 1, 0.1);
         requestAnimationFrame(self.loop);
     } 
     
@@ -149,8 +169,7 @@ document.addEventListener('keydown', function(event) {
     {
         self.currentScene = self.scene; // Switch to scene1 if p is pressed
         self.particleSystem = new ParticleSystem(self.scene)
-        console.log(self.currentScene)
-        console.log(self.particleSystem)
+        
         requestAnimationFrame(self.loop)
     }
 

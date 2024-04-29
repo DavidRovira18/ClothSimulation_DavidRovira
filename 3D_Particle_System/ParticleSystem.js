@@ -1,5 +1,5 @@
 //3D particle system implementation
-import { Vector3, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
+import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from './integrators.js';
 import { SpringForce } from "./SpringForce.js";
 
@@ -68,20 +68,49 @@ export class Spring{
         this.r = particle1.pos.distanceTo(particle2.pos); //Resting length
 
         //Spring mesh
-        const springGeometry = new CylinderGeometry(0.05, 0.05, this.restLength, 8);
+        const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
         const springMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
         this.springMesh = new Mesh(springGeometry, springMaterial);
+
+        // Compute position
+        const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
+        this.springMesh.position.copy(midpoint);
 
         // Compute rotation for the cylinder to align with the line between particles
         const direction = new Vector3().copy(particle2.pos).sub(particle1.pos).normalize();
         const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
-        const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction);
+        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
         this.springMesh.quaternion.copy(quaternion);
 
         scene.add(this.springMesh);
 
         //Init Spring Force
         this.springForce = new SpringForce(this.particle1, this.particle2, this.ks, this.kd, this.r);
+    }
+
+    update(dt)
+    {
+        this.springForce.applyForce();
+
+        SemiImplicitEulerIntegrator(this.particle1, dt);
+        SemiImplicitEulerIntegrator(this.particle2, dt);
+
+        this.particle1.mesh.position.copy(this.particle1.pos);
+        this.particle2.mesh.position.copy(this.particle2.pos);
+
+        this.updateSpringMesh();
+    }
+
+    updateSpringMesh() {
+        // Compute position
+        const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
+        this.springMesh.position.copy(midpoint);
+
+        // Compute rotation
+        const direction = new Vector3().copy(this.particle2.pos).sub(this.particle1.pos).normalize();
+        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
+        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
+        this.springMesh.quaternion.copy(quaternion);
     }
 }
 
@@ -120,16 +149,17 @@ export class SpringMassSystem extends ParticleSystem{
     {
         super(scene)
         this.springs = [];
+        this.scene = scene;
     }
 
     addSpring(particle1, particle2, stifness, damping) //Create spring between particles
     {
-        this.springs.push(new Spring(particle1, particle2, stifness, damping, scene));
+        this.springs.push(new Spring(particle1, particle2, stifness, damping, this.scene));
     }
 
     update(dt) {
         // Update particle system
-        super.update(dt);
+        // super.update(dt);
 
         // Update springs
         this.springs.forEach((spring) => {
