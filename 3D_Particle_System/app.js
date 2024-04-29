@@ -5,7 +5,7 @@ import { particleIntersectsPlane } from './collisions.js';
 
 var PARTICLE_SYSTEM = {
     init: function(){
-        //Set up scene
+        //Set up falling particles scene
         this.scene = new THREE.Scene();
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -39,6 +39,11 @@ var PARTICLE_SYSTEM = {
         this.scene.add(this.fillLight);
         this.scene.add(this.backLight);
 
+        //Set up mass spring scene
+        this.scene2 = new THREE.Scene();
+        this.scene2.add(this.keyLight);
+        this.scene2.add(this.fillLight);
+        this.scene2.add(this.backLight);
 
         //Set up camera and controls
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -49,11 +54,11 @@ var PARTICLE_SYSTEM = {
         this.controls.enableZooming = true;
         this.controls.dampingFactor = 0.25;
 
-        //Init particle system
-        this.particleSystem = new ParticleSystem(this.scene);
+        //Set current scene
+        this.currentScene = this.scene;
 
-        //Init clock
-        this.clock = new THREE.Clock();
+        //Init particle system
+        this.particleSystem = new ParticleSystem(this.currentScene);
 
         //Delta time computation (temporal)
         this.currentTime = performance.now();
@@ -70,7 +75,6 @@ var PARTICLE_SYSTEM = {
     {
         var self = PARTICLE_SYSTEM;
 
-        //var deltaTime = self.clock.getDelta();
         self.controls.update();
 
         var newTime = performance.now();
@@ -82,18 +86,19 @@ var PARTICLE_SYSTEM = {
             var deltaTime = Math.min(frameTime, self.dt);
             self.particleSystem.update(deltaTime);
 
-            //Check collisions
-            self.particleSystem.particles.forEach(particle => {
-                if(particleIntersectsPlane(particle.BB, self.groundBB))
-                    particle.grounded = true;
-            });
+            //Check collisions scene1
+            if(self.currentScene == self.scene)
+            {
+                self.particleSystem.particles.forEach(particle => {
+                    if(particleIntersectsPlane(particle.BB, self.groundBB))
+                        particle.grounded = true;
+                });
+            }
             
             frameTime -= deltaTime;
         }
 
-
-
-        self.renderer.render(self.scene, self.camera);
+        self.renderer.render(self.currentScene, self.camera);
         
         requestAnimationFrame(self.loop);
     },
@@ -101,6 +106,9 @@ var PARTICLE_SYSTEM = {
     addParticle: function(event)
     {
         var self = PARTICLE_SYSTEM;
+
+        if (self.currentScene == self.scene2) return;
+
         //Normalized coordinates of the mousse
         self.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         self.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -120,5 +128,33 @@ var PARTICLE_SYSTEM = {
     }
 }
 
-PARTICLE_SYSTEM.init();
-PARTICLE_SYSTEM.loop();
+var self = PARTICLE_SYSTEM;
+
+document.addEventListener('keydown', function(event) {
+    
+    self.particleSystem.particles.forEach(particle => {
+        self.currentScene.remove(particle.mesh);
+    })
+
+    if (event.key === 'k')
+    {
+        self.currentScene = self.scene2; // Switch to scene2 if k is pressed
+        self.particleSystem = new ParticleSystem(self.scene2)
+        console.log(self.currentScene)
+        requestAnimationFrame(self.loop);
+    } 
+    
+
+    if (event.key === 'p')
+    {
+        self.currentScene = self.scene; // Switch to scene1 if p is pressed
+        self.particleSystem = new ParticleSystem(self.scene)
+        console.log(self.currentScene)
+        console.log(self.particleSystem)
+        requestAnimationFrame(self.loop)
+    }
+
+});
+
+self.init();
+self.loop();
