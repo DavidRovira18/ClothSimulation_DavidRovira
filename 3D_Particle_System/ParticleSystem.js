@@ -90,6 +90,9 @@ export class Spring{
 
     update(dt)
     {
+        this.particle2.clearForce();
+        this.particle2.applyForce(new Vector3(0, -9.81 * this.particle2.mass, 0));
+
         this.springForce.applyForce();
 
         SemiImplicitEulerIntegrator(this.particle1, dt);
@@ -130,7 +133,7 @@ export class ParticleSystem{
 
     addForce(f)
     {
-        if (!(f instanceof Vector3))
+        if (!(f instanceof Vector3))    
             console.error("Force is not a Vector3");
 
         this.forces.push(f);

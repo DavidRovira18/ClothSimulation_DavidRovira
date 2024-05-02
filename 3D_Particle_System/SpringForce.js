@@ -13,7 +13,7 @@ export class SpringForce{
     applyForce()
     {
         const f = this.calculateForce();
-        this.p1.applyForce(f);
+        // this.p1.applyForce(f);
         this.p2.applyForce(f.clone().negate());
     }
 
