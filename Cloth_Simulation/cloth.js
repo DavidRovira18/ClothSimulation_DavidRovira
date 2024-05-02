@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { ParticleSystem } from './ParticleSystem.js';
 
 var CLOTHSIM = {
     init: function(){
@@ -37,29 +38,73 @@ var CLOTHSIM = {
         this.controls.enableZooming = true;
         this.controls.dampingFactor = 0.25;
 
-        //OBJ Loader
-        this.self = this; //reference to this
-        this.loader = new OBJLoader();
-        this.loader.setPath('./models/');
-        this.loader.load(
-            // resource URL
-            'cloth_v3.obj',
-            // called when resource is loaded
-            ( object ) => {
-                if (object.children[0] instanceof THREE.Mesh)
-                    object.children[0].material.side = THREE.DoubleSide;
-                this.scene.add( object );
-            },
-            // called when loading is in progress
-            ( xhr ) => {
-                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-            },
-            // called when loading has errors
-            ( error ) => {
-                console.error('An error occurred while loading the OBJ file:', error);
-            }
-        );
+        //Init Particle System
+        this.particleSystem = new ParticleSystem(this.scene);
 
+        //OBJ Loader
+        // this.self = this; //reference to this
+        // this.loader = new OBJLoader();
+        // this.loader.setPath('./models/');
+        // this.loader.load(
+        //     // resource URL
+        //     'cloth_v3.obj',
+        //     // called when resource is loaded
+        //     ( object ) => {
+        //         if (object.children[0] instanceof THREE.Mesh)
+        //             object.children[0].material.side = THREE.DoubleSide;
+        //         this.scene.add( object );
+
+        //         const position = object.children[0].geometry.getAttribute( 'position' );
+ 		//         const vertices = [];
+ 		//         for ( let i = 0; i < position.count / position.itemSize; i++ ) {
+		// 	        const vertex = new THREE.Vector3(
+		// 		        position.getX(i),
+		// 		        position.getY(i),
+		// 		        position.getZ(i)
+		// 	        );
+		// 	    vertices.push(vertex);
+        //         }
+
+        //         //Create a particle for each vertex
+        //         vertices.forEach(function(vertex) { 
+        //             var position = vertex.clone().applyMatrix4(object.children[0].matrixWorld);
+        //             CLOTHSIM.particleSystem.addParticle(10, position);  
+        //         })
+        //     },
+        //     // called when loading is in progress
+        //     ( xhr ) => {
+        //         console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        //     },
+        //     // called when loading has errors
+        //     ( error ) => {
+        //         console.error('An error occurred while loading the OBJ file:', error);
+        //     }
+        // );
+
+        //SIMPLE PLANE
+        const geometry = new THREE.PlaneGeometry( 10, 10);
+        const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+        const plane = new THREE.Mesh( geometry, material );
+        this.scene.add( plane );
+
+        const position = plane.geometry.getAttribute( 'position' );
+        const vertices = [];
+        for ( let i = 0; i < position.count / position.itemSize; i++ ) {
+            const vertex = new THREE.Vector3(
+                position.getX(i),
+                position.getY(i),
+                position.getZ(i)
+            );
+             vertices.push(vertex);
+        }
+
+        console.log(vertices)
+        //Create a particle for each vertex
+        vertices.forEach(function(vertex) { 
+            var position = vertex.clone().applyMatrix4(plane.matrixWorld);
+            CLOTHSIM.particleSystem.addParticle(10, position);  
+        })
+        
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
