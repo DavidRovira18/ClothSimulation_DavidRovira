@@ -126,9 +126,14 @@ export class ParticleSystem{
         this.scene = scene;
     }
 
-    addParticle(mass, pos)
+    createParticle(mass, pos)
     {
         this.particles.push(new Particle(mass, pos, this.scene));
+    }
+
+    addParticle(particle)
+    {
+        this.particles.push(particle);
     }
 
     addForce(f)
@@ -144,6 +149,11 @@ export class ParticleSystem{
         this.particles.forEach((particle) => {
             particle.update(dt);
         })
+    }
+
+    getParticleFromPos(pos)
+    {
+        return this.particles.find(particle => particle.pos.equals(pos));
     }
 }
 

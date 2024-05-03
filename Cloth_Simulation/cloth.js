@@ -62,7 +62,7 @@ var CLOTHSIM = {
                 const numVertices = position.count;
 
                 for (let i = 0; i < numVertices; ++i) {
-                    const vertex = new THREE.Vector3().fromBufferAttribute(position, i);
+                    const vertex = new THREE.Vector3().fromBufferAttribute(position, i); //Get vertex position
                     vertices.push(vertex);
                 }
 
@@ -75,16 +75,33 @@ var CLOTHSIM = {
                     const position1 = vertices[i].clone().applyMatrix4(object.children[0].matrixWorld);
                     const position2 = vertices[i + 1].clone().applyMatrix4(object.children[0].matrixWorld);
                     const position3 = vertices[i + 2].clone().applyMatrix4(object.children[0].matrixWorld);
+                    
+                    //Get particle in each position
+                    var particle1 = CLOTHSIM.particleSystem.getParticleFromPos(position1);
+                    var particle2 = CLOTHSIM.particleSystem.getParticleFromPos(position2);
+                    var particle3 = CLOTHSIM.particleSystem.getParticleFromPos(position3);
 
-                    const particle1 = new Particle(1, position1, this.scene);
-                    const particle2 = new Particle(1, position2, this.scene);
-                    const particle3 = new Particle(1, position3, this.scene);
+                    // If no particle in position create particle and add it to particleSystem
+                    if (!particle1) {
+                        particle1 = new Particle(1, position1, this.scene);
+                        CLOTHSIM.particleSystem.addParticle(particle1);
+                    }
+                    if (!particle2) {
+                        particle2 = new Particle(1, position2, this.scene);
+                        CLOTHSIM.particleSystem.addParticle(particle2);
+                    }
+                    if (!particle3) {
+                        particle3 = new Particle(1, position3, this.scene);
+                        CLOTHSIM.particleSystem.addParticle(particle3);
+                    }
 
                     // Create springs between each pair of neighboring vertices in the face
                     CLOTHSIM.particleSystem.addSpring(particle1, particle2, stiffness, damping);
                     CLOTHSIM.particleSystem.addSpring(particle2, particle3, stiffness, damping);
                     CLOTHSIM.particleSystem.addSpring(particle3, particle1, stiffness, damping);
                 }
+
+                console.log(CLOTHSIM.particleSystem.particles.length)
             },
             // called when loading is in progress
             ( xhr ) => {
