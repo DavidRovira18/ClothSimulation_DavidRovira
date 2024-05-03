@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { ParticleSystem } from './ParticleSystem.js';
+import { Particle, ParticleSystem, SpringMassSystem } from './ParticleSystem.js';
+
 
 var CLOTHSIM = {
     init: function(){
@@ -39,71 +40,61 @@ var CLOTHSIM = {
         this.controls.dampingFactor = 0.25;
 
         //Init Particle System
-        this.particleSystem = new ParticleSystem(this.scene);
+        this.particleSystem = new SpringMassSystem(this.scene);
 
         //OBJ Loader
-        // this.self = this; //reference to this
-        // this.loader = new OBJLoader();
-        // this.loader.setPath('./models/');
-        // this.loader.load(
-        //     // resource URL
-        //     'cloth_v3.obj',
-        //     // called when resource is loaded
-        //     ( object ) => {
-        //         if (object.children[0] instanceof THREE.Mesh)
-        //             object.children[0].material.side = THREE.DoubleSide;
-        //         this.scene.add( object );
+        this.self = this; //reference to this
+        this.loader = new OBJLoader();
+        this.loader.setPath('./models/');
+        this.loader.load(
+            // resource URL
+            'cloth_v3.obj',
+            // called when resource is loaded
+            ( object ) => {
+                if (object.children[0] instanceof THREE.Mesh)
+                    object.children[0].material.side = THREE.DoubleSide;
+                this.scene.add( object );
 
-        //         const position = object.children[0].geometry.getAttribute( 'position' );
- 		//         const vertices = [];
- 		//         for ( let i = 0; i < position.count / position.itemSize; i++ ) {
-		// 	        const vertex = new THREE.Vector3(
-		// 		        position.getX(i),
-		// 		        position.getY(i),
-		// 		        position.getZ(i)
-		// 	        );
-		// 	    vertices.push(vertex);
-        //         }
+                const geometry = object.children[0].geometry;
+                const position = geometry.attributes.position;
 
-        //         //Create a particle for each vertex
-        //         vertices.forEach(function(vertex) { 
-        //             var position = vertex.clone().applyMatrix4(object.children[0].matrixWorld);
-        //             CLOTHSIM.particleSystem.addParticle(10, position);  
-        //         })
-        //     },
-        //     // called when loading is in progress
-        //     ( xhr ) => {
-        //         console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-        //     },
-        //     // called when loading has errors
-        //     ( error ) => {
-        //         console.error('An error occurred while loading the OBJ file:', error);
-        //     }
-        // );
+                const vertices = [];
+                const numVertices = position.count;
 
-        //SIMPLE PLANE
-        const geometry = new THREE.PlaneGeometry( 10, 10);
-        const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-        const plane = new THREE.Mesh( geometry, material );
-        this.scene.add( plane );
+                for (let i = 0; i < numVertices; ++i) {
+                    const vertex = new THREE.Vector3().fromBufferAttribute(position, i);
+                    vertices.push(vertex);
+                }
 
-        const position = plane.geometry.getAttribute( 'position' );
-        const vertices = [];
-        for ( let i = 0; i < position.count / position.itemSize; i++ ) {
-            const vertex = new THREE.Vector3(
-                position.getX(i),
-                position.getY(i),
-                position.getZ(i)
-            );
-             vertices.push(vertex);
-        }
+                const stiffness = 1;
+                const damping = 1;
 
-        console.log(vertices)
-        //Create a particle for each vertex
-        vertices.forEach(function(vertex) { 
-            var position = vertex.clone().applyMatrix4(plane.matrixWorld);
-            CLOTHSIM.particleSystem.addParticle(10, position);  
-        })
+                // Iterate through vertices in sets of three to create springs between neighboring vertices
+                for (let i = 0; i < numVertices; i += 3) {
+                    // Get the positions of the vertices forming the face
+                    const position1 = vertices[i].clone().applyMatrix4(object.children[0].matrixWorld);
+                    const position2 = vertices[i + 1].clone().applyMatrix4(object.children[0].matrixWorld);
+                    const position3 = vertices[i + 2].clone().applyMatrix4(object.children[0].matrixWorld);
+
+                    const particle1 = new Particle(1, position1, this.scene);
+                    const particle2 = new Particle(1, position2, this.scene);
+                    const particle3 = new Particle(1, position3, this.scene);
+
+                    // Create springs between each pair of neighboring vertices in the face
+                    CLOTHSIM.particleSystem.addSpring(particle1, particle2, stiffness, damping);
+                    CLOTHSIM.particleSystem.addSpring(particle2, particle3, stiffness, damping);
+                    CLOTHSIM.particleSystem.addSpring(particle3, particle1, stiffness, damping);
+                }
+            },
+            // called when loading is in progress
+            ( xhr ) => {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            // called when loading has errors
+            ( error ) => {
+                console.error('An error occurred while loading the OBJ file:', error);
+            }
+        );
         
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
