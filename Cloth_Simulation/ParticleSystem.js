@@ -97,8 +97,8 @@ export class Spring{
         this.particle2.clearForce();
 
         //Add gravity force
-        this.applyForce(new Vector3(0, -9.81 * this.particle1.mass, 0));
-        this.applyForce(new Vector3(0, -9.81 * this.particle2.mass, 0));
+        this.particle1.applyForce(new Vector3(0, -9.81 * this.particle1.mass, 0));
+        this.particle2.applyForce(new Vector3(0, -9.81 * this.particle2.mass, 0));
 
         //Store previous position of particles
         this.particle1.prevPos = this.particle1.pos;
@@ -108,8 +108,8 @@ export class Spring{
         SemiImplicitEulerIntegrator(this.particle1, dt);
         SemiImplicitEulerIntegrator(this.particle2, dt);
 
-        //Apply Distance Constraint C(x1,x2) = |x2-x1| - r;
-        var currentLength = particle1.pos.distanceTo(particle2.pos);
+        //Apply Distance Constraint C(x1,x2) = |x2-x1| - r. In cloth simulation distance constraint can be seen as stretching the cloth
+        var currentLength = this.particle1.pos.distanceTo(this.particle2.pos);
         var posSubs = this.particle2.pos.sub(this.particle1.pos)
         
         var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / (this.particle1.w + this.particle2.w)));

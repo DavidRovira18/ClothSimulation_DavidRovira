@@ -101,7 +101,6 @@ var CLOTHSIM = {
                     CLOTHSIM.particleSystem.addSpring(particle3, particle1, stiffness, damping);
                 }
 
-                console.log(CLOTHSIM.particleSystem.particles.length)
             },
             // called when loading is in progress
             ( xhr ) => {
@@ -116,12 +115,28 @@ var CLOTHSIM = {
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
+
+        //Delta time computation
+        this.currentTime = performance.now();
+        this.dt = 1/60;
     },
 
     loop: function ()
     {
         var self = CLOTHSIM;
         self.controls.update();
+
+        var newTime = performance.now();
+        var frameTime = newTime - self.currentTime;
+        self.currentTime = newTime;
+
+        while(frameTime > 0.0)
+        {
+            var deltaTime = Math.min(frameTime, self.dt);
+            self.particleSystem.update(deltaTime);
+
+            frameTime -= deltaTime;
+        }
 
         self.renderer.render(self.scene, self.camera);
         
