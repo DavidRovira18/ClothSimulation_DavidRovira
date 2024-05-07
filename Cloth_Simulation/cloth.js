@@ -71,6 +71,8 @@ var CLOTHSIM = {
 
                 // Iterate through vertices in sets of three to create springs between neighboring vertices
                 for (let i = 0; i < numVertices; i += 3) {
+
+                    if (CLOTHSIM.particleSystem.springs.length >= 20) continue;
                     // Get the positions of the vertices forming the face
                     const position1 = vertices[i].clone().applyMatrix4(object.children[0].matrixWorld);
                     const position2 = vertices[i + 1].clone().applyMatrix4(object.children[0].matrixWorld);
@@ -82,16 +84,17 @@ var CLOTHSIM = {
                     var particle3 = CLOTHSIM.particleSystem.getParticleFromPos(position3);
 
                     // If no particle in position create particle and add it to particleSystem
+                    const mass = i < 3 ? Infinity : 1;  
                     if (!particle1) {
-                        particle1 = new Particle(1, position1, this.scene);
+                        particle1 = new Particle(mass, position1, this.scene);
                         CLOTHSIM.particleSystem.addParticle(particle1);
                     }
                     if (!particle2) {
-                        particle2 = new Particle(1, position2, this.scene);
+                        particle2 = new Particle(mass, position2, this.scene);
                         CLOTHSIM.particleSystem.addParticle(particle2);
                     }
                     if (!particle3) {
-                        particle3 = new Particle(1, position3, this.scene);
+                        particle3 = new Particle(mass, position3, this.scene);
                         CLOTHSIM.particleSystem.addParticle(particle3);
                     }
 
@@ -100,7 +103,6 @@ var CLOTHSIM = {
                     CLOTHSIM.particleSystem.addSpring(particle2, particle3, stiffness, damping);
                     CLOTHSIM.particleSystem.addSpring(particle3, particle1, stiffness, damping);
                 }
-
             },
             // called when loading is in progress
             ( xhr ) => {
@@ -111,7 +113,6 @@ var CLOTHSIM = {
                 console.error('An error occurred while loading the OBJ file:', error);
             }
         );
-        
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();

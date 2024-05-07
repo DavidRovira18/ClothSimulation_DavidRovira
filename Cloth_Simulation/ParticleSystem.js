@@ -16,6 +16,8 @@ export class Particle{
 
         this.w = 1/this.mass; //Inverse mass
 
+        this.prevPos = new Vector3();
+
         this.geometry = new SphereGeometry(1, 32, 32);
         this.material = new MeshBasicMaterial({ color: 0xff0000 });
         this.mesh = new Mesh(this.geometry, this.material);
@@ -96,32 +98,34 @@ export class Spring{
         this.particle1.clearForce();
         this.particle2.clearForce();
 
-        //Add gravity force
-        this.particle1.applyForce(new Vector3(0, -9.81 * this.particle1.mass, 0));
-        this.particle2.applyForce(new Vector3(0, -9.81 * this.particle2.mass, 0));
+        // Add gravity force
+        var gravityForce = new Vector3(0, -9.81, 0);
+        this.particle1.applyForce(gravityForce);
+        this.particle2.applyForce(gravityForce);
 
-        //Store previous position of particles
-        this.particle1.prevPos = this.particle1.pos;
-        this.particle2.prevPos = this.particle2.pos;
+        // Store previous position of particles
+        this.particle1.prevPos.copy(this.particle1.pos);
+        this.particle2.prevPos.copy(this.particle2.pos);
 
-        //Compute predicted position of particles
+        // Compute predicted position of particles
         SemiImplicitEulerIntegrator(this.particle1, dt);
         SemiImplicitEulerIntegrator(this.particle2, dt);
 
-        //Apply Distance Constraint C(x1,x2) = |x2-x1| - r. In cloth simulation distance constraint can be seen as stretching the cloth
+        // // Apply Distance Constraint C(x1,x2) = |x2-x1| - r. In cloth simulation distance constraint can be seen as stretching the cloth
         var currentLength = this.particle1.pos.distanceTo(this.particle2.pos);
-        var posSubs = this.particle2.pos.sub(this.particle1.pos)
-        
-        var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / (this.particle1.w + this.particle2.w)));
-        var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / (this.particle1.w + this.particle2.w)));
-    
+        var posSubs = this.particle2.pos.clone().sub(this.particle1.pos);
+        var totalWeight = this.particle1.w + this.particle2.w;
+
+        var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / totalWeight));
+        var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / totalWeight));
+
         // Apply corrections to particle positions
         this.particle1.pos.add(deltaX1);
         this.particle2.pos.add(deltaX2);
 
         //Final Particle Velocity
-        this.particle1.vel = this.particle1.pos.sub(this.particle1.prevPos).divideScalar(dt);
-        this.particle2.vel = this.particle2.pos.sub(this.particle2.prevPos).divideScalar(dt);
+        this.particle1.vel.copy(this.particle1.pos).sub(this.particle1.prevPos).divideScalar(dt);
+        this.particle2.vel.copy(this.particle2.pos).sub(this.particle2.prevPos).divideScalar(dt);
 
         this.particle1.mesh.position.copy(this.particle1.pos);
         this.particle2.mesh.position.copy(this.particle2.pos);
