@@ -116,12 +116,17 @@ export class Spring{
         var posSubs = this.particle2.pos.clone().sub(this.particle1.pos);
         var totalWeight = this.particle1.w + this.particle2.w;
 
-        var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / totalWeight));
-        var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / totalWeight));
+        if(this.particle1.w != 0)
+        {
+            var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / totalWeight));
+            this.particle1.pos.add(deltaX1);
+        }
 
-        // Apply corrections to particle positions
-        this.particle1.pos.add(deltaX1);
-        this.particle2.pos.add(deltaX2);
+        if(this.particle2.w != 0)
+        {
+            var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / totalWeight));
+            this.particle2.pos.add(deltaX2);
+        }
 
         //Final Particle Velocity
         this.particle1.vel.copy(this.particle1.pos).sub(this.particle1.prevPos).divideScalar(dt);
