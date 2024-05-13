@@ -87,9 +87,9 @@ export class Spring{
         this.springMesh.quaternion.copy(quaternion);
 
         scene.add(this.springMesh);
-
-        //Init Spring Force
-        this.springForce = new SpringForce(this.particle1, this.particle2, this.ks, this.kd, this.r);
+        
+        // //Init Spring Force
+        // this.springForce = new SpringForce(this.particle1, this.particle2, this.ks, this.kd, this.r);
     }
 
     update(dt)

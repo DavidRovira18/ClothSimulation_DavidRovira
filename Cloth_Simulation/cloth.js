@@ -48,7 +48,7 @@ var CLOTHSIM = {
         this.loader.setPath('./models/');
         this.loader.load(
             // resource URL
-            'cloth_v3.obj',
+            'cloth.obj',
             // called when resource is loaded
             ( object ) => {
                 if (object.children[0] instanceof THREE.Mesh)
@@ -57,52 +57,55 @@ var CLOTHSIM = {
 
                 const geometry = object.children[0].geometry;
                 const position = geometry.attributes.position;
-
+            
                 const vertices = [];
                 const numVertices = position.count;
-
+            
+                // Define neighborhood radius
+                const neighborhoodRadius = 15; // 
+            
+                // Create spheres representing neighborhoods around each vertex
+                const spheres = [];
                 for (let i = 0; i < numVertices; ++i) {
-                    const vertex = new THREE.Vector3().fromBufferAttribute(position, i); //Get vertex position
+                    const vertex = new THREE.Vector3().fromBufferAttribute(position, i); // Get vertex position
                     vertices.push(vertex);
                 }
-
+            
                 const stiffness = 1;
                 const damping = 1;
 
-                // Iterate through vertices in sets of three to create springs between neighboring vertices
-                for (let i = 0; i < numVertices; i += 3) {
+                //Create particle in each vertex
+                for (let i = 0; i < numVertices; ++i)
+                {
+                    const vertex = vertices[i];
+                    var particle = CLOTHSIM.particleSystem.getParticleFromPos(vertex);
 
-                    if (CLOTHSIM.particleSystem.springs.length >= 20) continue;
-                    // Get the positions of the vertices forming the face
-                    const position1 = vertices[i].clone().applyMatrix4(object.children[0].matrixWorld);
-                    const position2 = vertices[i + 1].clone().applyMatrix4(object.children[0].matrixWorld);
-                    const position3 = vertices[i + 2].clone().applyMatrix4(object.children[0].matrixWorld);
-                    
-                    //Get particle in each position
-                    var particle1 = CLOTHSIM.particleSystem.getParticleFromPos(position1);
-                    var particle2 = CLOTHSIM.particleSystem.getParticleFromPos(position2);
-                    var particle3 = CLOTHSIM.particleSystem.getParticleFromPos(position3);
-
-                    // If no particle in position create particle and add it to particleSystem
-                    const mass = i < 3 ? Infinity : 1;  
-                    if (!particle1) {
-                        particle1 = new Particle(mass, position1, this.scene);
-                        CLOTHSIM.particleSystem.addParticle(particle1);
-                    }
-                    if (!particle2) {
-                        particle2 = new Particle(mass, position2, this.scene);
-                        CLOTHSIM.particleSystem.addParticle(particle2);
-                    }
-                    if (!particle3) {
-                        particle3 = new Particle(mass, position3, this.scene);
-                        CLOTHSIM.particleSystem.addParticle(particle3);
+                    // If no particle in position, create particle and add it to particleSystem
+                    const mass = 1;
+                    if (!particle) 
+                    {
+                        particle = new Particle(mass, vertex, this.scene);
+                        CLOTHSIM.particleSystem.addParticle(particle);
+                        const sphere = new THREE.Sphere(vertex, neighborhoodRadius);
+                        spheres.push(sphere);
                     }
 
-                    // Create springs between each pair of neighboring vertices in the face
-                    CLOTHSIM.particleSystem.addSpring(particle1, particle2, stiffness, damping);
-                    CLOTHSIM.particleSystem.addSpring(particle2, particle3, stiffness, damping);
-                    CLOTHSIM.particleSystem.addSpring(particle3, particle1, stiffness, damping);
                 }
+                
+                //Create links between neighbor particles
+                for (let i = 0; i < CLOTHSIM.particleSystem.particles.length; ++i)
+                    for (let j = 0; j < spheres.length; ++j)
+                    {
+                        var particle = CLOTHSIM.particleSystem.particles[i];
+                        var sphere = spheres[j];
+
+                        if(sphere.center.equals(particle.pos))
+                            continue;
+
+                        if(sphere.containsPoint(particle.pos))
+                            CLOTHSIM.particleSystem.addSpring(particle, CLOTHSIM.particleSystem.particles[j], stiffness, damping);
+
+                    }   
             },
             // called when loading is in progress
             ( xhr ) => {
@@ -120,6 +123,8 @@ var CLOTHSIM = {
         //Delta time computation
         this.currentTime = performance.now();
         this.dt = 1/60;
+
+        console.log(this.particleSystem.particles)
     },
 
     loop: function ()
@@ -134,7 +139,7 @@ var CLOTHSIM = {
         while(frameTime > 0.0)
         {
             var deltaTime = Math.min(frameTime, self.dt);
-            self.particleSystem.update(deltaTime);
+            //self.particleSystem.update(deltaTime);
 
             frameTime -= deltaTime;
         }
