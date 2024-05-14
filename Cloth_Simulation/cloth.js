@@ -62,7 +62,7 @@ var CLOTHSIM = {
                 const numVertices = position.count;
             
                 // Define neighborhood radius
-                const neighborhoodRadius = 15; // 
+                const neighborhoodRadius = 20; // 
             
                 // Create spheres representing neighborhoods around each vertex
                 const spheres = [];
@@ -103,7 +103,7 @@ var CLOTHSIM = {
                             continue;
 
                         if(sphere.containsPoint(particle.pos))
-                            CLOTHSIM.particleSystem.addSpring(particle, CLOTHSIM.particleSystem.particles[j], stiffness, damping);
+                            CLOTHSIM.particleSystem.addSpring(particle, CLOTHSIM.particleSystem.particles[j], stiffness, damping); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
 
                     }   
             },
