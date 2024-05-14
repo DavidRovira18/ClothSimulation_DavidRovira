@@ -120,11 +120,21 @@ var CLOTHSIM = {
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
 
+        // Event listener for mouse clicks
+        window.addEventListener('click', this.onMouseClick);
+
         //Delta time computation
         this.currentTime = performance.now();
         this.dt = 1/60;
 
-        console.log(this.particleSystem.particles)
+        const axesHelper = new THREE.AxesHelper( 50 );  //The X axis is red. The Y axis is green. The Z axis is blue.
+        this.scene.add( axesHelper );
+
+        //Interactivity parameters
+        this.simulationRunning = false;
+
+        this.paused_text = document.getElementById("paused")
+        this.running_text = document.getElementById("running")
     },
 
     loop: function ()
@@ -132,21 +142,55 @@ var CLOTHSIM = {
         var self = CLOTHSIM;
         self.controls.update();
 
-        var newTime = performance.now();
-        var frameTime = newTime - self.currentTime;
-        self.currentTime = newTime;
-
-        while(frameTime > 0.0)
+        if(self.simulationRunning)
         {
-            var deltaTime = Math.min(frameTime, self.dt);
-            //self.particleSystem.update(deltaTime);
+            var newTime = performance.now();
+            var frameTime = newTime - self.currentTime;
+            self.currentTime = newTime;
 
-            frameTime -= deltaTime;
+            while(frameTime > 0.0)
+            {
+                var deltaTime = Math.min(frameTime, self.dt);
+                self.particleSystem.update(deltaTime);
+
+                frameTime -= deltaTime;
+            }
         }
 
         self.renderer.render(self.scene, self.camera);
         
         requestAnimationFrame(self.loop);
+    },
+
+    onMouseClick(event)
+    {
+        const self = CLOTHSIM;
+        event.preventDefault();
+
+        const rect = self.renderer.domElement.getBoundingClientRect();
+
+        //Normalize mouse coordinates
+        self.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        self.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        self.raycaster.setFromCamera(self.mouse, self.camera);
+
+        const intersections = self.raycaster.intersectObjects(self.particleSystem.particles.map(particle => particle.mesh));
+
+        if (intersections.length > 0) {
+            const intersectedParticle = intersections[0].object;
+
+            self.particleSystem.particles.forEach((particle) => {
+                if(particle.pos.equals(intersectedParticle.position))
+                    {
+                        particle.mass = Infinity
+                        particle.w = 1/particle.mass;
+                        // Change color to white to know which particles are attached
+                        intersectedParticle.material.color.set(0xFFFFFF);
+                    }
+            })
+
+        }
     }
 }
 

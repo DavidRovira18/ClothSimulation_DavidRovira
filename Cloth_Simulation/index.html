@@ -19,11 +19,34 @@
         margin:0;
     }
 
-    canvas{
+    canvas {
         display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0; /* Ensure canvas is behind the text */
+    }
+
+    .visible, .hidden {
+        position: absolute;
+        top: 10px; /* Adjust as needed */
+        left: 10px; /* Adjust as needed */
+        z-index: 100; /* Ensure text is on top */
+        color: green;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .hidden {
+        display: none;
     }
 </style>
 <body>
+
+    <h class="visible" id="paused">Simulation Paused!</h>
+    <h class="hidden" id="running">Simulation Running!</h>
     <script type="module" src="integrators.js"></script>
     <script type="module" src="SpringForce.js"></script>
     <script type="module" src="ParticleSystem.js"></script>
