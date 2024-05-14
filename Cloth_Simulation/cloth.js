@@ -133,8 +133,27 @@ var CLOTHSIM = {
         //Interactivity parameters
         this.simulationRunning = false;
 
-        this.paused_text = document.getElementById("paused")
-        this.running_text = document.getElementById("running")
+        this.paused_text = document.getElementById("paused");
+        this.running_text = document.getElementById("running");
+        this.toggle_simulation_btn = document.getElementsByClassName("toggle_simulation")[0];
+        this.toggle_simulation_btn.addEventListener("click", function ()
+        {
+            this.simulationRunning = this.simulationRunning ? false : true;
+            
+            if(this.simulationRunning)
+            {
+                this.paused_text.className = "hidden";
+                this.running_text.className = "visible";
+                this.toggle_simulation_btn.innerHTML = "Pause Simulation"
+            }
+
+            else
+            {
+                this.paused_text.className = "visible";
+                this.running_text.className = "hidden";
+                this.toggle_simulation_btn.innerHTML = "Play Simulation"
+            }
+        }.bind(this))
     },
 
     loop: function ()
@@ -151,7 +170,7 @@ var CLOTHSIM = {
             while(frameTime > 0.0)
             {
                 var deltaTime = Math.min(frameTime, self.dt);
-                self.particleSystem.update(deltaTime);
+                //self.particleSystem.update(deltaTime);
 
                 frameTime -= deltaTime;
             }
@@ -165,6 +184,9 @@ var CLOTHSIM = {
     onMouseClick(event)
     {
         const self = CLOTHSIM;
+        
+        if(self.simulationRunning) return;
+        
         event.preventDefault();
 
         const rect = self.renderer.domElement.getBoundingClientRect();
