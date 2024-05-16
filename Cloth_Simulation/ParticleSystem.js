@@ -61,13 +61,11 @@ export class Particle{
     }
 }
 
-export class Spring{
-    constructor(particle1, particle2, stifness, damping, scene)
+export class Link{
+    constructor(particle1, particle2, scene)
     {
         this.particle1 = particle1;
         this.particle2 = particle2;
-        this.ks = stifness;
-        this.kd = damping;
 
         this.r = particle1.pos.distanceTo(particle2.pos); //Resting length
 
@@ -87,9 +85,6 @@ export class Spring{
         this.springMesh.quaternion.copy(quaternion);
 
         scene.add(this.springMesh);
-        
-        // //Init Spring Force
-        // this.springForce = new SpringForce(this.particle1, this.particle2, this.ks, this.kd, this.r);
     }
 
     update(dt)
@@ -99,7 +94,7 @@ export class Spring{
         this.particle2.clearForce();
 
         // Add gravity force
-        var gravityForce = new Vector3(0, -9.81, 0);
+        var gravityForce = new Vector3(0, -0.81, 0);
         this.particle1.applyForce(gravityForce);
         this.particle2.applyForce(gravityForce);
 
@@ -135,10 +130,10 @@ export class Spring{
         this.particle1.mesh.position.copy(this.particle1.pos);
         this.particle2.mesh.position.copy(this.particle2.pos);
 
-        this.updateSpringMesh();
+        this.updateLinkMesh();
     }
 
-    updateSpringMesh() {
+    updateLinkMesh() {
         // Compute position
         const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
         this.springMesh.position.copy(midpoint);
@@ -191,17 +186,17 @@ export class ParticleSystem{
     }
 }
 
-export class SpringMassSystem extends ParticleSystem{
+export class LinksSystem extends ParticleSystem{
     constructor(scene)
     {
         super(scene)
-        this.springs = [];
+        this.links = [];
         this.scene = scene;
     }
 
-    addSpring(particle1, particle2, stifness, damping) //Create spring between particles
+    addLink(particle1, particle2) //Create spring between particles
     {
-        this.springs.push(new Spring(particle1, particle2, stifness, damping, this.scene));
+        this.links.push(new Link(particle1, particle2, this.scene));
     }
 
     update(dt) {
@@ -209,8 +204,8 @@ export class SpringMassSystem extends ParticleSystem{
         // super.update(dt);
 
         // Update springs
-        this.springs.forEach((spring) => {
-            spring.update(dt);
+        this.links.forEach((link) => {
+            link.update(dt);
         });
     }
 }

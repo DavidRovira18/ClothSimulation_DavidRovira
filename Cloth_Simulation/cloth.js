@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { Particle, ParticleSystem, SpringMassSystem } from './ParticleSystem.js';
+import { Particle, ParticleSystem, LinksSystem } from './ParticleSystem.js';
 
 
 var CLOTHSIM = {
@@ -40,7 +40,7 @@ var CLOTHSIM = {
         this.controls.dampingFactor = 0.25;
 
         //Init Particle System
-        this.particleSystem = new SpringMassSystem(this.scene);
+        this.particleSystem = new LinksSystem(this.scene);
 
         //OBJ Loader
         this.self = this; //reference to this
@@ -59,7 +59,8 @@ var CLOTHSIM = {
                 const position = geometry.attributes.position;
             
                 const vertices = [];
-                const numVertices = position.count;
+                // const numVertices = position.count;
+                const numVertices = 3;
             
                 // Define neighborhood radius
                 const neighborhoodRadius = 20; // 
@@ -70,9 +71,6 @@ var CLOTHSIM = {
                     const vertex = new THREE.Vector3().fromBufferAttribute(position, i); // Get vertex position
                     vertices.push(vertex);
                 }
-            
-                const stiffness = 1;
-                const damping = 1;
 
                 //Create particle in each vertex
                 for (let i = 0; i < numVertices; ++i)
@@ -103,7 +101,7 @@ var CLOTHSIM = {
                             continue;
 
                         if(sphere.containsPoint(particle.pos))
-                            CLOTHSIM.particleSystem.addSpring(particle, CLOTHSIM.particleSystem.particles[j], stiffness, damping); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
+                            CLOTHSIM.particleSystem.addLink(particle, CLOTHSIM.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
 
                     }   
             },
@@ -170,7 +168,7 @@ var CLOTHSIM = {
             while(frameTime > 0.0)
             {
                 var deltaTime = Math.min(frameTime, self.dt);
-                //self.particleSystem.update(deltaTime);
+                self.particleSystem.update(deltaTime);
 
                 frameTime -= deltaTime;
             }
@@ -211,7 +209,6 @@ var CLOTHSIM = {
                         intersectedParticle.material.color.set(0xFFFFFF);
                     }
             })
-
         }
     }
 }
