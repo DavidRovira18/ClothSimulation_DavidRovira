@@ -4,8 +4,16 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Particle, ParticleSystem, LinksSystem } from './ParticleSystem.js';
 
 
-var CLOTHSIM = {
-    init: function(){
+class CLOTHSIM {
+    constructor() {
+        // scene attributes
+        this.scene = null;
+        this.renderer = null;
+        this.dt = 1/60;
+        this.substeps = 3; 
+    }
+    
+    init() {
         //Set up scene
         this.scene = new THREE.Scene();
         this.renderer = new THREE.WebGLRenderer();
@@ -33,7 +41,7 @@ var CLOTHSIM = {
 
         //Set up camera and controls
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 20;
+        this.camera.position.set(0,30,50);
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.enableZooming = true;
@@ -59,8 +67,8 @@ var CLOTHSIM = {
                 const position = geometry.attributes.position;
             
                 const vertices = [];
-                // const numVertices = position.count;
-                const numVertices = 3;
+                const numVertices = position.count;
+                //const numVertices = 3;
             
                 // Define neighborhood radius
                 const neighborhoodRadius = 20; // 
@@ -76,14 +84,15 @@ var CLOTHSIM = {
                 for (let i = 0; i < numVertices; ++i)
                 {
                     const vertex = vertices[i];
-                    var particle = CLOTHSIM.particleSystem.getParticleFromPos(vertex);
+                    var particle = this.particleSystem.getParticleFromPos(vertex);
 
                     // If no particle in position, create particle and add it to particleSystem
                     const mass = 1;
                     if (!particle) 
                     {
-                        particle = new Particle(mass, vertex, this.scene);
-                        CLOTHSIM.particleSystem.addParticle(particle);
+                        // particle = new Particle(mass, vertex, this.scene);
+                        // this.particleSystem.addParticle(particle);
+                        this.particleSystem.createParticle(mass, vertex);
                         const sphere = new THREE.Sphere(vertex, neighborhoodRadius);
                         spheres.push(sphere);
                     }
@@ -91,19 +100,21 @@ var CLOTHSIM = {
                 }
                 
                 //Create links between neighbor particles
-                for (let i = 0; i < CLOTHSIM.particleSystem.particles.length; ++i)
+                for (let i = 0; i < this.particleSystem.particles.length; ++i)
                     for (let j = 0; j < spheres.length; ++j)
                     {
-                        var particle = CLOTHSIM.particleSystem.particles[i];
+                        var particle = this.particleSystem.particles[i];
                         var sphere = spheres[j];
 
                         if(sphere.center.equals(particle.pos))
                             continue;
 
                         if(sphere.containsPoint(particle.pos))
-                            CLOTHSIM.particleSystem.addLink(particle, CLOTHSIM.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
+                            this.particleSystem.addLink(particle, this.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
 
-                    }   
+                    }  
+
+                this.loop();
             },
             // called when loading is in progress
             ( xhr ) => {
@@ -119,11 +130,10 @@ var CLOTHSIM = {
         this.raycaster = new THREE.Raycaster();
 
         // Event listener for mouse clicks
-        window.addEventListener('click', this.onMouseClick);
+        window.addEventListener('click', this.onMouseClick.bind(this));
 
         //Delta time computation
         this.currentTime = performance.now();
-        this.dt = 1/60;
 
         const axesHelper = new THREE.AxesHelper( 50 );  //The X axis is red. The Y axis is green. The Z axis is blue.
         this.scene.add( axesHelper );
@@ -134,8 +144,7 @@ var CLOTHSIM = {
         this.paused_text = document.getElementById("paused");
         this.running_text = document.getElementById("running");
         this.toggle_simulation_btn = document.getElementsByClassName("toggle_simulation")[0];
-        this.toggle_simulation_btn.addEventListener("click", function ()
-        {
+        this.toggle_simulation_btn.addEventListener("click", () => {
             this.simulationRunning = this.simulationRunning ? false : true;
             
             if(this.simulationRunning)
@@ -151,56 +160,51 @@ var CLOTHSIM = {
                 this.running_text.className = "hidden";
                 this.toggle_simulation_btn.innerHTML = "Play Simulation"
             }
-        }.bind(this))
-    },
+        });
+    }
 
-    loop: function ()
+    loop()
     {
-        var self = CLOTHSIM;
-        self.controls.update();
+        this.controls.update();
 
-        if(self.simulationRunning)
+        var newTime = performance.now();
+        var frameTime = (newTime - this.currentTime) / 1000;
+        if (frameTime > 1) frameTime = 1;
+        this.currentTime = newTime;
+        if(this.simulationRunning)
         {
-            var newTime = performance.now();
-            var frameTime = newTime - self.currentTime;
-            self.currentTime = newTime;
-
             while(frameTime > 0.0)
             {
-                var deltaTime = Math.min(frameTime, self.dt);
-                self.particleSystem.update(deltaTime);
-
+                var deltaTime = Math.min(frameTime, this.dt);
+                this.particleSystem.update(deltaTime, this.substeps);
                 frameTime -= deltaTime;
             }
         }
-
-        self.renderer.render(self.scene, self.camera);
+        this.renderer.render(this.scene, this.camera);
         
-        requestAnimationFrame(self.loop);
-    },
+        requestAnimationFrame(this.loop.bind(this));
+    }
 
     onMouseClick(event)
     {
-        const self = CLOTHSIM;
-        
-        if(self.simulationRunning) return;
+        if(this.simulationRunning) return;
         
         event.preventDefault();
 
-        const rect = self.renderer.domElement.getBoundingClientRect();
+        const rect = this.renderer.domElement.getBoundingClientRect();
 
         //Normalize mouse coordinates
-        self.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        self.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-        self.raycaster.setFromCamera(self.mouse, self.camera);
+        this.raycaster.setFromCamera(this.mouse, this.camera);
 
-        const intersections = self.raycaster.intersectObjects(self.particleSystem.particles.map(particle => particle.mesh));
+        const intersections = this.raycaster.intersectObjects(this.particleSystem.particles.map(particle => particle.mesh));
 
         if (intersections.length > 0) {
             const intersectedParticle = intersections[0].object;
 
-            self.particleSystem.particles.forEach((particle) => {
+            this.particleSystem.particles.forEach((particle) => {
                 if(particle.pos.equals(intersectedParticle.position))
                     {
                         particle.mass = Infinity
@@ -213,5 +217,5 @@ var CLOTHSIM = {
     }
 }
 
-CLOTHSIM.init();
-CLOTHSIM.loop();
+let app = new CLOTHSIM();
+app.init();

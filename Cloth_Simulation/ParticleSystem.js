@@ -4,11 +4,12 @@ import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_Sys
 import { SpringForce } from "../3D_Particle_System/SpringForce.js";
 
 export class Particle{
-    constructor(mass, pos, scene)
+    constructor(id, mass, pos, scene)
     {
         if (! (pos instanceof Vector3))
             console.error("Position is not a Vector3")
 
+        this.id = id;
         this.mass = mass;
         this.pos = pos;
         this.vel = new Vector3(0,0,0);
@@ -87,50 +88,63 @@ export class Link{
         scene.add(this.springMesh);
     }
 
-    update(dt)
+    update(dt, substeps)
     {
-        //PBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
-        this.particle1.clearForce();
-        this.particle2.clearForce();
+        var ts = dt/substeps;
 
-        // Add gravity force
-        var gravityForce = new Vector3(0, -0.81, 0);
-        this.particle1.applyForce(gravityForce);
-        this.particle2.applyForce(gravityForce);
-
-        // Store previous position of particles
-        this.particle1.prevPos.copy(this.particle1.pos);
-        this.particle2.prevPos.copy(this.particle2.pos);
-
-        // Compute predicted position of particles
-        SemiImplicitEulerIntegrator(this.particle1, dt);
-        SemiImplicitEulerIntegrator(this.particle2, dt);
-
-        // // Apply Distance Constraint C(x1,x2) = |x2-x1| - r. In cloth simulation distance constraint can be seen as stretching the cloth
-        var currentLength = this.particle1.pos.distanceTo(this.particle2.pos);
-        var posSubs = this.particle2.pos.clone().sub(this.particle1.pos);
-        var totalWeight = this.particle1.w + this.particle2.w;
-
-        if(this.particle1.w != 0)
+        console.log(substeps)
+        for(let i = 0; i < substeps; ++i)
         {
-            var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / totalWeight));
-            this.particle1.pos.add(deltaX1);
-        }
+            //PBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
+            this.particle1.clearForce();
+            this.particle2.clearForce();
 
-        if(this.particle2.w != 0)
-        {
-            var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / totalWeight));
-            this.particle2.pos.add(deltaX2);
-        }
+            // Add gravity force
+            var gravityForce = new Vector3(0, -9.8, 0);
+            this.particle1.applyForce(gravityForce);
+            this.particle2.applyForce(gravityForce);
 
-        //Final Particle Velocity
-        this.particle1.vel.copy(this.particle1.pos).sub(this.particle1.prevPos).divideScalar(dt);
-        this.particle2.vel.copy(this.particle2.pos).sub(this.particle2.prevPos).divideScalar(dt);
+            // Store previous position of particles (update this after computing new positions)
+            var prevPos1 = this.particle1.pos.clone();
+            var prevPos2 = this.particle2.pos.clone();
+
+            // Compute predicted position of particles
+            SemiImplicitEulerIntegrator(this.particle1, ts);
+            SemiImplicitEulerIntegrator(this.particle2, ts);
+
+            // Apply Distance Constraint C(x1,x2) = |x2-x1| - r. In cloth simulation distance constraint can be seen as stretching the cloth
+            var currentLength = this.particle1.pos.distanceTo(this.particle2.pos);
+            var posSubs = this.particle2.pos.clone().sub(this.particle1.pos);
+            posSubs.divideScalar(currentLength);
+            var totalWeight = this.particle1.w + this.particle2.w;
+
+            if(currentLength == 0)
+                return;
+            
+            // Correct positions based on the constraint
+            if (this.particle1.w != 0) {
+                var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / totalWeight));
+                this.particle1.pos.add(deltaX1);
+            }
+
+            if (this.particle2.w != 0) {
+                var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / totalWeight));
+                this.particle2.pos.add(deltaX2);
+            }
+
+            // Update velocities based on the corrected positions
+            this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
+            this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
+
+            console.log("Particle " + this.particle1.id + " position: " + this.particle1.pos.x + ", " + this.particle1.pos.y + ", " + this.particle1.pos.z);
+            console.log("Particle " + this.particle2.id + " position: " + this.particle2.pos.x + ", " + this.particle2.pos.y + ", " + this.particle2.pos.z);
+        }
 
         this.particle1.mesh.position.copy(this.particle1.pos);
         this.particle2.mesh.position.copy(this.particle2.pos);
 
         this.updateLinkMesh();
+
     }
 
     updateLinkMesh() {
@@ -151,13 +165,15 @@ export class ParticleSystem{
     {
         this.particles = [];
         this.forces = [];
+        this.idCount = 0;
 
         this.scene = scene;
     }
 
     createParticle(mass, pos)
     {
-        this.particles.push(new Particle(mass, pos, this.scene));
+        this.particles.push(new Particle(this.idCount, mass, pos, this.scene));
+        this.idCount++
     }
 
     addParticle(particle)
@@ -191,21 +207,27 @@ export class LinksSystem extends ParticleSystem{
     {
         super(scene)
         this.links = [];
+        this.idLinks = [];
         this.scene = scene;
     }
 
     addLink(particle1, particle2) //Create spring between particles
     {
+        // prevent repeated links
+        if (this.idLinks.find((el) => {if (el[0] == particle1.id && el[1] == particle2.id) return true;}) || this.idLinks.find((el) => {if (el[0] == particle2.id && el[1] == particle1.id) return true;}))
+            return;
+
+        this.idLinks.push([particle1.id, particle2.id]);
         this.links.push(new Link(particle1, particle2, this.scene));
     }
 
-    update(dt) {
+    update(dt, substeps) {
         // Update particle system
         // super.update(dt);
 
         // Update springs
         this.links.forEach((link) => {
-            link.update(dt);
+            link.update(dt, substeps);
         });
     }
 }
