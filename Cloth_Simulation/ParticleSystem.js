@@ -136,6 +136,13 @@ export class Link{
             this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
             this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
 
+            //CLAMP VEL NOSE
+            // var minVel = new Vector3(-50,-50,-50);
+            // var maxVel = new Vector3(20,20,20);
+
+            // this.particle1.vel.clamp(minVel, maxVel);
+            // this.particle2.vel.clamp(minVel, maxVel);
+
             console.log("Particle " + this.particle1.id + " position: " + this.particle1.pos.x + ", " + this.particle1.pos.y + ", " + this.particle1.pos.z);
             console.log("Particle " + this.particle2.id + " position: " + this.particle2.pos.x + ", " + this.particle2.pos.y + ", " + this.particle2.pos.z);
         }
