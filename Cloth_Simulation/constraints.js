@@ -4,25 +4,25 @@ export function solveDistanceConstraint(particle1, particle2, r, compliance, dt)
     const alpha = compliance / (dt * dt);
 
     const totalWeight = particle1.w + particle2.w;
-
-    // Compute gradient
-    var gradient = particle2.pos.clone().sub(particle1.pos);
-
-    var length = gradient.length();
-    gradient.divideScalar(length);
-
-    // Compute Constraint current value
-    const C = length - r;
-
-    console.log("Constraint value", C);
-
-    // Lagrangian multiplier
-    const lagrangianMultiplier = -C / (totalWeight + alpha);
-
-    // Correct positions of particles
-    const deltaX1 = gradient.clone().multiplyScalar(lagrangianMultiplier * particle1.w);
+  
+    // Inicializar el vector gradiente como el vector de distancia desde p1 hacia p0.
+    const grad = new Vector3().subVectors(particle1.pos, particle2.pos);
+  
+    // Obtener la longitud del vector gradiente antes de la normalización
+    const length = grad.length();
+  
+    // Normalizar el vector gradiente para obtener solo la dirección
+    grad.divideScalar(length);
+  
+    const C = length - r; // calcular el valor actual del constraint
+  
+    // Calculamos el multiplicador Lagrangiano
+    const deltaLagrangianMultiplier = -C / (totalWeight + alpha);
+  
+    // Actualizar posiciones
+    const deltaX1 = grad.clone().multiplyScalar(deltaLagrangianMultiplier * particle1.w);
     particle1.pos.add(deltaX1);
-
-    const deltaX2 = gradient.clone().multiplyScalar(-lagrangianMultiplier * particle2.w);
+  
+    const deltaX2 = grad.clone().multiplyScalar(-deltaLagrangianMultiplier * particle2.w);
     particle2.pos.add(deltaX2);
 }

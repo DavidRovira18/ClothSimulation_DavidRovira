@@ -145,6 +145,10 @@ export class Link{
 
             solveDistanceConstraint(this.particle1, this.particle2, this.r, 0.01, ts); 
 
+            // Update velocities based on the corrected positions
+            this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
+            this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
+
             console.log("Particle " + this.particle1.id + " position: " + this.particle1.pos.x + ", " + this.particle1.pos.y + ", " + this.particle1.pos.z);
             console.log("Particle " + this.particle2.id + " position: " + this.particle2.pos.x + ", " + this.particle2.pos.y + ", " + this.particle2.pos.z);
         }
