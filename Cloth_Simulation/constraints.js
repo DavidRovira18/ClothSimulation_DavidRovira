@@ -5,21 +5,22 @@ export function solveDistanceConstraint(particle1, particle2, r, compliance, dt)
 
     const totalWeight = particle1.w + particle2.w;
   
-    // Inicializar el vector gradiente como el vector de distancia desde p1 hacia p0.
+    // Init Gradient Vector
     const grad = new Vector3().subVectors(particle1.pos, particle2.pos);
   
-    // Obtener la longitud del vector gradiente antes de la normalización
+    // Lenght of grad vector (distance between particles)
     const length = grad.length();
   
-    // Normalizar el vector gradiente para obtener solo la dirección
+    // Obtain the direction of the gradient
     grad.divideScalar(length);
   
-    const C = length - r; // calcular el valor actual del constraint
+    // Constraint current value
+    const C = length - r;
   
-    // Calculamos el multiplicador Lagrangiano
-    const deltaLagrangianMultiplier = -C / (totalWeight + alpha);
+    // Compute Lagrangian Multiplier
+    const lagrangianMultiplier = -C / (totalWeight + alpha);
   
-    // Actualizar posiciones
+    // Update position
     const deltaX1 = grad.clone().multiplyScalar(deltaLagrangianMultiplier * particle1.w);
     particle1.pos.add(deltaX1);
   
