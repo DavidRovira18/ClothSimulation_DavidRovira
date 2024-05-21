@@ -112,37 +112,6 @@ export class Link{
             SemiImplicitEulerIntegrator(this.particle1, ts);
             SemiImplicitEulerIntegrator(this.particle2, ts);
 
-            // // Apply Distance Constraint C(x1,x2) = |x2-x1| - r. In cloth simulation distance constraint can be seen as stretching the cloth
-            // var currentLength = this.particle1.pos.distanceTo(this.particle2.pos);
-            // var posSubs = this.particle2.pos.clone().sub(this.particle1.pos);
-            // posSubs.divideScalar(currentLength);
-            // var totalWeight = this.particle1.w + this.particle2.w;
-
-            // if(currentLength == 0)
-            //     return;
-            
-            // // Correct positions based on the constraint
-            // if (this.particle1.w != 0) {
-            //     var deltaX1 = posSubs.clone().multiplyScalar((currentLength - this.r) * (this.particle1.w / totalWeight));
-            //     this.particle1.pos.add(deltaX1);
-            // }
-
-            // if (this.particle2.w != 0) {
-            //     var deltaX2 = posSubs.clone().multiplyScalar((currentLength - this.r) * (-this.particle2.w / totalWeight));
-            //     this.particle2.pos.add(deltaX2);
-            // }
-
-            // // Update velocities based on the corrected positions
-            // this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
-            // this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
-
-            // //CLAMP VEL NOSE
-            // // var minVel = new Vector3(-50,-50,-50);
-            // // var maxVel = new Vector3(20,20,20);
-
-            // // this.particle1.vel.clamp(minVel, maxVel);
-            // // this.particle2.vel.clamp(minVel, maxVel);
-
             solveDistanceConstraint(this.particle1, this.particle2, this.r, 0.01, ts); 
 
             // Update velocities based on the corrected positions

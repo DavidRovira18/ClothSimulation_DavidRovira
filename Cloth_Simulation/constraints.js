@@ -21,9 +21,9 @@ export function solveDistanceConstraint(particle1, particle2, r, compliance, dt)
     const lagrangianMultiplier = -C / (totalWeight + alpha);
   
     // Update position
-    const deltaX1 = grad.clone().multiplyScalar(deltaLagrangianMultiplier * particle1.w);
+    const deltaX1 = grad.clone().multiplyScalar(lagrangianMultiplier * particle1.w);
     particle1.pos.add(deltaX1);
   
-    const deltaX2 = grad.clone().multiplyScalar(-deltaLagrangianMultiplier * particle2.w);
+    const deltaX2 = grad.clone().multiplyScalar(-lagrangianMultiplier * particle2.w);
     particle2.pos.add(deltaX2);
 }
