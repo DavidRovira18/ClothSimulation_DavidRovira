@@ -12,6 +12,7 @@ export class Particle{
 
         this.id = id;
         this.mass = mass;
+        this.initMass = mass;
         this.pos = pos;
         this.vel = new Vector3(0,0,0);
         this.f = new Vector3(0,0,0);
@@ -19,6 +20,8 @@ export class Particle{
         this.w = 1/this.mass; //Inverse mass
 
         this.prevPos = new Vector3();
+
+        this.attached = false;
 
         this.geometry = new SphereGeometry(1, 32, 32);
         this.material = new MeshBasicMaterial({ color: 0xff0000 });
@@ -117,9 +120,6 @@ export class Link{
             // Update velocities based on the corrected positions
             this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
             this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
-
-            console.log("Particle " + this.particle1.id + " position: " + this.particle1.pos.x + ", " + this.particle1.pos.y + ", " + this.particle1.pos.z);
-            console.log("Particle " + this.particle2.id + " position: " + this.particle2.pos.x + ", " + this.particle2.pos.y + ", " + this.particle2.pos.z);
         }
 
         this.particle1.mesh.position.copy(this.particle1.pos);

@@ -51,7 +51,6 @@ class CLOTHSIM {
         this.particleSystem = new LinksSystem(this.scene);
 
         //OBJ Loader
-        this.self = this; //reference to this
         this.loader = new OBJLoader();
         this.loader.setPath('./models/');
         this.loader.load(
@@ -90,8 +89,6 @@ class CLOTHSIM {
                     const mass = 1;
                     if (!particle) 
                     {
-                        // particle = new Particle(mass, vertex, this.scene);
-                        // this.particleSystem.addParticle(particle);
                         this.particleSystem.createParticle(mass, vertex);
                         const sphere = new THREE.Sphere(vertex, neighborhoodRadius);
                         spheres.push(sphere);
@@ -134,9 +131,6 @@ class CLOTHSIM {
 
         //Delta time computation
         this.currentTime = performance.now();
-
-        const axesHelper = new THREE.AxesHelper( 50 );  //The X axis is red. The Y axis is green. The Z axis is blue.
-        this.scene.add( axesHelper );
 
         //Interactivity parameters
         this.simulationRunning = false;
@@ -207,10 +201,20 @@ class CLOTHSIM {
             this.particleSystem.particles.forEach((particle) => {
                 if(particle.pos.equals(intersectedParticle.position))
                     {
-                        particle.mass = Infinity
-                        particle.w = 1/particle.mass;
-                        // Change color to white to know which particles are attached
-                        intersectedParticle.material.color.set(0xFFFFFF);
+                        if(particle.attached)
+                        {
+                            particle.mass = particle.initMass;
+                            particle.w = 1/particle.mass;
+                            intersectedParticle.material.color.set(0xFF0000);
+                        }
+                        else
+                        {
+                            particle.mass = Infinity
+                            particle.w = 1/particle.mass;
+                            // Change color to white to know which particles are attached
+                            intersectedParticle.material.color.set(0xFFFFFF);
+                            particle.attached = true;
+                        }
                     }
             })
         }
