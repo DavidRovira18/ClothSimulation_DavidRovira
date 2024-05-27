@@ -1,14 +1,14 @@
 import { Vector3, BoxGeometry, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh } from "three";
 
 
-class RigidBody{
+export class RigidBody{
     constructor(scene)
     {
         this.scene = scene;
     }
 }
 
-class Box extends RigidBody{
+export class Box extends RigidBody{
     constructor(min, max, scene)
     {
         super(scene);
@@ -24,7 +24,7 @@ class Box extends RigidBody{
     }
 }
 
-class Sphere extends RigidBody{
+export class Sphere extends RigidBody{
     constructor(center, radius, scene)
     {
         super(scene);

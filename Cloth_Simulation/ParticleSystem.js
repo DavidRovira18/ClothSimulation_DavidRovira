@@ -3,6 +3,7 @@ import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMateria
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
 import { SpringForce } from "../3D_Particle_System/SpringForce.js";
 import { solveDistanceConstraint } from "./constraints.js";
+import { RigidBody } from "./RigidBody.js";
 
 export class Particle{
     constructor(id, mass, pos, scene)
@@ -94,38 +95,38 @@ export class Link{
 
     update(dt, substeps)
     {
-        var ts = dt/substeps;
+        // var ts = dt/substeps;
 
-        for(let i = 0; i < substeps; ++i)
-        {
-            //PBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
-            this.particle1.clearForce();
-            this.particle2.clearForce();
+        // for(let i = 0; i < substeps; ++i)
+        // {
+        //     PBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
+        //     this.particle1.clearForce();
+        //     this.particle2.clearForce();
 
-            // Add gravity force
-            var gravityForce = new Vector3(0, -9.8, 0);
-            this.particle1.applyForce(gravityForce);
-            this.particle2.applyForce(gravityForce);
+        //     Add gravity force
+        //     var gravityForce = new Vector3(0, -9.8, 0);
+        //     this.particle1.applyForce(gravityForce);
+        //     this.particle2.applyForce(gravityForce);
 
-            // Store previous position of particles (update this after computing new positions)
-            var prevPos1 = this.particle1.pos.clone();
-            var prevPos2 = this.particle2.pos.clone();
+        //     Store previous position of particles (update this after computing new positions)
+        //     var prevPos1 = this.particle1.pos.clone();
+        //     var prevPos2 = this.particle2.pos.clone();
 
-            // Compute predicted position of particles
-            SemiImplicitEulerIntegrator(this.particle1, ts);
-            SemiImplicitEulerIntegrator(this.particle2, ts);
+        //     Compute predicted position of particles
+        //     SemiImplicitEulerIntegrator(this.particle1, ts);
+        //     SemiImplicitEulerIntegrator(this.particle2, ts);
 
-            solveDistanceConstraint(this.particle1, this.particle2, this.r, 0.01, ts); 
+        //     solveDistanceConstraint(this.particle1, this.particle2, this.r, 0.01, ts); 
 
-            // Update velocities based on the corrected positions
-            this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
-            this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
-        }
+        //     Update velocities based on the corrected positions
+        //     this.particle1.vel.copy(this.particle1.pos).sub(prevPos1).divideScalar(ts);
+        //     this.particle2.vel.copy(this.particle2.pos).sub(prevPos2).divideScalar(ts);
+        // }
 
-        this.particle1.mesh.position.copy(this.particle1.pos);
-        this.particle2.mesh.position.copy(this.particle2.pos);
+        // this.particle1.mesh.position.copy(this.particle1.pos);
+        // this.particle2.mesh.position.copy(this.particle2.pos);
 
-        this.updateLinkMesh();
+        // this.updateLinkMesh();
 
     }
 
@@ -147,6 +148,7 @@ export class ParticleSystem{
     {
         this.particles = [];
         this.forces = [];
+        this.rigidBodies = [];
         this.idCount = 0;
 
         this.scene = scene;
@@ -169,6 +171,14 @@ export class ParticleSystem{
             console.error("Force is not a Vector3");
 
         this.forces.push(f);
+    }
+
+    addRigidBody(rigidBody) 
+    {
+        if (!(rigidBody instanceof RigidBody))
+            console.error("Not a RigidBody");
+
+        this.rigidBodies.push(rigidBody);
     }
 
     update(dt)
@@ -204,13 +214,35 @@ export class LinksSystem extends ParticleSystem{
     }
 
     update(dt, substeps) {
-        // Update particle system
-        // super.update(dt);
+        
+        // XPBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
+        
+        var ts = dt / substeps;
 
-        // Update springs
-        this.links.forEach((link) => {
-            link.update(dt, substeps);
-        });
+        for (let i = 0; i < substeps; ++i) {
+            this.particles.forEach((particle) => {
+                particle.clearForce();
+                particle.applyForce(new Vector3(0, -9.8, 0)); // Add gravity force
+                particle.prevPos.copy(particle.pos); // Store previous position
+                SemiImplicitEulerIntegrator(particle, ts); // Compute predicted position
+            });
+
+            this.links.forEach((link) => {
+                solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
+                link.updateLinkMesh();
+            });
+
+            // Update velocities based on the corrected positions
+            this.particles.forEach((particle) => {
+                particle.vel.copy(particle.pos).sub(particle.prevPos).divideScalar(ts);
+                particle.mesh.position.copy(particle.pos);
+            });
+
+        }
+
+        // this.links.forEach((link) => {
+        //             link.update(dt,substeps)
+        //         });
     }
 }
 
