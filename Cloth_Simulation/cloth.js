@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Particle, ParticleSystem, LinksSystem } from './ParticleSystem.js';
+import { SphereBody } from './RigidBody.js';
 
 (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
@@ -124,6 +125,11 @@ class CLOTHSIM {
                 console.error('An error occurred while loading the OBJ file:', error);
             }
         );
+
+        //Add rigid body for collision
+        const rigidBody = new SphereBody(new THREE.Vector3(0, -30, 0), 20, this.scene);
+        this.particleSystem.addRigidBody(rigidBody);
+
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();

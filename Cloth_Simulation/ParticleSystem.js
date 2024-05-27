@@ -229,16 +229,23 @@ export class LinksSystem extends ParticleSystem{
 
             this.links.forEach((link) => {
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
-                link.updateLinkMesh();
             });
 
             // Update velocities based on the corrected positions
             this.particles.forEach((particle) => {
                 particle.vel.copy(particle.pos).sub(particle.prevPos).divideScalar(ts);
-                particle.mesh.position.copy(particle.pos);
             });
 
         }
+
+        this.particles.forEach((particle) => {
+            particle.mesh.position.copy(particle.pos);
+        })
+        
+        this.links.forEach((link) => {
+            link.updateLinkMesh();
+        })
+
 
         // this.links.forEach((link) => {
         //             link.update(dt,substeps)
