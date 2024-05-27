@@ -2,10 +2,12 @@ import { BoxBody, SphereBody } from "./RigidBody"
 export function detectCollisions(particle, rigidBody)
 {
     if (rigidBody instanceof BoxBody)
-        detectCollisionsBox(particle, rigidBody);   
+        return detectCollisionsBox(particle, rigidBody);   
 
     if (rigidBody instanceof SphereBody)
-        detectCollisionsSphere(particle, rigidBody);
+        return detectCollisionsSphere(particle, rigidBody);
+
+    return { collision: false };
 }
 
 export function resolveCollisions(particle, rigidBody, colInfo)

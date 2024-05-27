@@ -192,6 +192,17 @@ export class ParticleSystem{
     {
         return this.particles.find(particle => particle.pos.equals(pos));
     }
+
+    handleCollisions() {
+        this.particles.forEach((particle) => {
+            this.rigidBodies.forEach((rigidBody) => {
+                const collisionInfo = detectCollision(particle, rigidBody);
+                if (collisionInfo.collision) {
+                    console.log(collisionInfo)
+                }
+            });
+        });
+    }
 }
 
 export class LinksSystem extends ParticleSystem{
@@ -236,6 +247,7 @@ export class LinksSystem extends ParticleSystem{
                 particle.vel.copy(particle.pos).sub(particle.prevPos).divideScalar(ts);
             });
 
+            this.handleCollisions();
         }
 
         this.particles.forEach((particle) => {
