@@ -1,4 +1,4 @@
-import { Vector3, BoxGeometry, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh } from "three";
+import { Vector3, BoxGeometry, SphereGeometry, MeshBasicMaterial, Mesh } from "three";
 
 
 export class RigidBody{
