@@ -1,7 +1,6 @@
 //3D particle system implementation
 import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
-import { SpringForce } from "../3D_Particle_System/SpringForce.js";
 import { solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
 import { detectCollisions } from "./collisions.js";
