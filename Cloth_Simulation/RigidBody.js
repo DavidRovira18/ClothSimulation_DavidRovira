@@ -1,6 +1,5 @@
 import { Vector3, BoxGeometry, SphereGeometry, MeshBasicMaterial, Mesh } from "three";
 
-
 export class RigidBody{
     constructor(scene)
     {

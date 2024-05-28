@@ -1,4 +1,5 @@
-import { BoxBody, SphereBody } from "./RigidBody"
+import { BoxBody, SphereBody } from "./RigidBody.js"
+
 export function detectCollisions(particle, rigidBody)
 {
     if (rigidBody instanceof BoxBody)
@@ -15,7 +16,7 @@ export function resolveCollisions(particle, rigidBody, colInfo)
 
 }
 
-detectCollisionsBox(particle, rigidBody)
+function detectCollisionsBox(particle, rigidBody)
 {
     if (particle.pos.x >= rigidBody.min.x && particle.pos.x <= rigidBody.max.x &&
         particle.pos.y >= rigidBody.min.y && particle.pos.y <= rigidBody.max.y &&
@@ -28,7 +29,7 @@ detectCollisionsBox(particle, rigidBody)
     return { collision: false };
 }
 
-detectCollisionsSphere(particle, rigidBody)
+function detectCollisionsSphere(particle, rigidBody)
 {
     const distance = particle.pos.distanceTo(rigidBody.center);
     if (distance < rigidBody.radius) { 

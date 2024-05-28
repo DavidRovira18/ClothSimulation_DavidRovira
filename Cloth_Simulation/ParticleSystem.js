@@ -4,6 +4,7 @@ import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_Sys
 import { SpringForce } from "../3D_Particle_System/SpringForce.js";
 import { solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
+import { detectCollisions } from "./collisions.js";
 
 export class Particle{
     constructor(id, mass, pos, scene)
@@ -196,7 +197,7 @@ export class ParticleSystem{
     handleCollisions() {
         this.particles.forEach((particle) => {
             this.rigidBodies.forEach((rigidBody) => {
-                const collisionInfo = detectCollision(particle, rigidBody);
+                const collisionInfo = detectCollisions(particle, rigidBody);
                 if (collisionInfo.collision) {
                     console.log(collisionInfo)
                 }
