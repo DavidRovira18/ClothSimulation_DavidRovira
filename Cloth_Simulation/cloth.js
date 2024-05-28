@@ -127,7 +127,7 @@ class CLOTHSIM {
         );
 
         //Add rigid body for collision
-        const rigidBody = new SphereBody(new THREE.Vector3(0, -30, 0), 20, this.scene);
+        const rigidBody = new SphereBody(new THREE.Vector3(0, -30, 0), 15, this.scene);
         this.particleSystem.addRigidBody(rigidBody);
 
         // Variables for user interaction

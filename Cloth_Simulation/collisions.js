@@ -13,7 +13,11 @@ export function detectCollisions(particle, rigidBody)
 
 export function resolveCollisions(particle, rigidBody, colInfo)
 {
+    if (rigidBody instanceof BoxBody)
+        resolveCollisionsBox(particle, rigidBody, colInfo);   
 
+    if (rigidBody instanceof SphereBody)
+        resolveCollisionsSphere(particle, rigidBody, colInfo);
 }
 
 function detectCollisionsBox(particle, rigidBody)
@@ -38,4 +42,18 @@ function detectCollisionsSphere(particle, rigidBody)
         return { collision: true, point: collisionPoint, normal: collisionNormal };
     }
     return { collision: false };
+}
+
+function resolveCollisionsBox(particle, rigidBody, colInfo)
+{
+
+}
+
+function resolveCollisionsSphere(particle, rigidBody, colInfo)
+{
+    const colDepth = rigidBody.radius - particle.pos.distanceTo(rigidBody.center); // How much the particle is inside the sphere
+    
+    // Move the particle outside the Sphere direction to the normal of the colision
+    const posCorrection = colInfo.normal.clone().multiplyScalar(colDepth); 
+    particle.pos.add(posCorrection); 
 }

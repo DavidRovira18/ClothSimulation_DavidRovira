@@ -3,7 +3,7 @@ import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMateria
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
 import { solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
-import { detectCollisions } from "./collisions.js";
+import { detectCollisions, resolveCollisions } from "./collisions.js";
 
 export class Particle{
     constructor(id, mass, pos, scene)
@@ -196,9 +196,9 @@ export class ParticleSystem{
     handleCollisions() {
         this.particles.forEach((particle) => {
             this.rigidBodies.forEach((rigidBody) => {
-                const collisionInfo = detectCollisions(particle, rigidBody);
-                if (collisionInfo.collision) {
-                    console.log(collisionInfo)
+                const colInfo = detectCollisions(particle, rigidBody);
+                if (colInfo.collision) {
+                    resolveCollisions(particle, rigidBody, colInfo)
                 }
             });
         });
@@ -242,12 +242,14 @@ export class LinksSystem extends ParticleSystem{
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
             });
 
+            this.handleCollisions(); //Solve collisions constraints
+
             // Update velocities based on the corrected positions
             this.particles.forEach((particle) => {
                 particle.vel.copy(particle.pos).sub(particle.prevPos).divideScalar(ts);
             });
 
-            this.handleCollisions();
+
         }
 
         this.particles.forEach((particle) => {
