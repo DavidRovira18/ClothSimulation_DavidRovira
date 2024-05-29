@@ -19,7 +19,7 @@ export class BoxBody extends RigidBody{
         this.material = new MeshBasicMaterial({ color: 0x0000ff });
         this.mesh = new Mesh(this.geometry, this.material);
         
-        this.mesh.position.copy(center);
+        this.mesh.position.copy(this.center);
         this.scene.add(this.mesh);
     }
 }
@@ -35,7 +35,7 @@ export class SphereBody extends RigidBody{
         this.material = new MeshBasicMaterial({ color: 0x0000ff });
         this.mesh = new Mesh(this.geometry, this.material);
 
-        this.mesh.position.copy(center);
+        this.mesh.position.copy(this.center);
         this.scene.add(this.mesh);
     }
 }
