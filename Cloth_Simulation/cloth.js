@@ -127,12 +127,12 @@ class CLOTHSIM {
         );
 
         //Add rigid body sphere for collision
-        // const rigidBody = new SphereBody(new THREE.Vector3(0, -30, 0), 15, this.scene);
-        // this.particleSystem.addRigidBody(rigidBody);
+        const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene);
+        this.particleSystem.addRigidBody(rigidBody);
 
         //Add rigid body box for collision
-        const rigidBody = new BoxBody(new THREE.Vector3(-20, -20, -10), new THREE.Vector3(20, -10, 10), this.scene);
-        this.particleSystem.addRigidBody(rigidBody);
+        // const rigidBody = new BoxBody(new THREE.Vector3(-20, -20, -10), new THREE.Vector3(20, -10, 10), this.scene);
+        // this.particleSystem.addRigidBody(rigidBody);
 
         // Variables for user interaction
         this.mouse = new THREE.Vector2();

@@ -12,8 +12,10 @@ export function detectCollisions(particle, rigidBody)
     return { collision: false };
 }
 
-export function resolveCollisions(particle, rigidBody, colInfo)
+export function resolveCollisions(particle, colInfo)
 {
+    const rigidBody = colInfo.rigidBody;
+
     if (rigidBody instanceof BoxBody)
         resolveCollisionsBox(particle, colInfo);   
 
@@ -29,7 +31,7 @@ function detectCollisionsBox(particle, rigidBody)
         
         const collisionPoint = particle.pos.clone();
         const collisionNormal = new Vector3(0, 1, 0);
-        return { collision: true, point: collisionPoint, normal: collisionNormal };
+        return { collision: true, rigidBody: rigidBody, point: collisionPoint, normal: collisionNormal };
     }
     return { collision: false };
 }
@@ -37,17 +39,17 @@ function detectCollisionsBox(particle, rigidBody)
 function detectCollisionsSphere(particle, rigidBody)
 {
     const distance = particle.pos.distanceTo(rigidBody.center);
-    if (distance < rigidBody.radius) { 
+    if (distance < rigidBody.radius + 1) { 
         const collisionNormal = particle.pos.clone().sub(rigidBody.center).normalize();
         const collisionPoint = rigidBody.center.clone().add(collisionNormal.clone().multiplyScalar(rigidBody.radius));
-        return { collision: true, point: collisionPoint, normal: collisionNormal };
+        return { collision: true, rigidBody: rigidBody, point: collisionPoint, normal: collisionNormal };
     }
     return { collision: false };
 }
 
 function resolveCollisionsBox(particle, colInfo)
 {
-    let correction = colInfo.normal.clone().multiplyScalar(0.01); // Small correction factor
+    let correction = colInfo.normal.clone().multiplyScalar(0.001);
     particle.pos.add(correction);
 }
 
@@ -57,5 +59,6 @@ function resolveCollisionsSphere(particle, rigidBody, colInfo)
     
     // Move the particle outside the Sphere direction to the normal of the colision
     const posCorrection = colInfo.normal.clone().multiplyScalar(colDepth); 
+
     particle.pos.add(posCorrection); 
 }

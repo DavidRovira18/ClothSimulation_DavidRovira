@@ -193,15 +193,22 @@ export class ParticleSystem{
         return this.particles.find(particle => particle.pos.equals(pos));
     }
 
-    handleCollisions() {
+    detectCols() 
+    {
         this.particles.forEach((particle) => {
             this.rigidBodies.forEach((rigidBody) => {
                 const colInfo = detectCollisions(particle, rigidBody);
-                if (colInfo.collision) {
-                    resolveCollisions(particle, rigidBody, colInfo)
-                }
+                particle.colInfo = colInfo; //Store collision info at each particle
             });
         });
+    }
+
+    resolveCols() 
+    {
+        this.particles.forEach((particle) => {
+            if(particle.colInfo.collision)
+               resolveCollisions(particle, particle.colInfo); 
+        })
     }
 }
 
@@ -211,6 +218,7 @@ export class LinksSystem extends ParticleSystem{
         super(scene)
         this.links = [];
         this.idLinks = [];
+        this.adjTriLinks = [];
         this.scene = scene;
     }
 
@@ -230,6 +238,8 @@ export class LinksSystem extends ParticleSystem{
         
         var ts = dt / substeps;
 
+        this.detectCols(); //Detect collisions
+
         for (let i = 0; i < substeps; ++i) {
             this.particles.forEach((particle) => {
                 particle.clearForce();
@@ -242,7 +252,7 @@ export class LinksSystem extends ParticleSystem{
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
             });
 
-            this.handleCollisions(); //Solve collisions constraint
+            this.resolveCols();            
 
             // Update velocities based on the corrected positions
             this.particles.forEach((particle) => {
