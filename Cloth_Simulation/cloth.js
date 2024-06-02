@@ -27,21 +27,6 @@ class CLOTHSIM {
         this.ambient_light = new THREE.AmbientLight(0x404040); // soft white light
         this.scene.add(this.ambient_light);
 
-        //Random lights to test (copied from atuto)
-        this.keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
-        this.keyLight.position.set(-100, 0, 100);
-
-        this.fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 0.75);
-        this.fillLight.position.set(100, 0, 100);
-
-        this.backLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        this.backLight.position.set(100, 0, -100).normalize();
-
-        this.scene.add(this.keyLight);
-        this.scene.add(this.fillLight);
-        this.scene.add(this.backLight);
-
-
         //Set up camera and controls
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0,30,50);
