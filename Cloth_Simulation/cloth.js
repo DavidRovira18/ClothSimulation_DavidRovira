@@ -14,6 +14,7 @@ class CLOTHSIM {
         this.renderer = null;
         this.dt = 1/60;
         this.substeps = 3; 
+        this.collidableVisible = true;
     }
     
     init() {
@@ -112,7 +113,7 @@ class CLOTHSIM {
         );
 
         //Add rigid body sphere for collision
-        const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene);
+        const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene, this.collidableVisible);
         this.particleSystem.addRigidBody(rigidBody);
 
         //Add rigid body box for collision
