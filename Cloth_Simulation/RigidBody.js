@@ -1,4 +1,4 @@
-import { Vector3, BoxGeometry, SphereGeometry, MeshBasicMaterial, Mesh } from "three";
+import { Vector3, BoxGeometry, SphereGeometry, CapsuleGeometry, Mesh, MeshBasicMaterial } from "three";
 
 export class RigidBody{
     constructor(scene, visible)
@@ -48,5 +48,22 @@ export class SphereBody extends RigidBody{
         this.scene.add(this.mesh);
 
         this.toogleVisibility();
+    }
+}
+
+export class CapsuleBody extends RigidBody{
+    constructor(radius, lenght, pos, scene, visible)
+    {
+        super(scene, visible);
+        this.radius = radius;
+        this.lenght = lenght;
+        this.pos = pos;
+
+        this.geometry = new CapsuleGeometry(this.radius, this.lenght, 4, 4);
+        this.material = new MeshBasicMaterial({ color: 0x0000ff });
+        this.mesh = new Mesh(this.geometry, this.material);
+
+        this.mesh.position.copy(this.pos);
+        this.scene.add(this.mesh);
     }
 }

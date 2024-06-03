@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Particle, ParticleSystem, LinksSystem } from './ParticleSystem.js';
-import { BoxBody, SphereBody } from './RigidBody.js';
+import { BoxBody, CapsuleBody, SphereBody } from './RigidBody.js';
 
 (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
@@ -113,12 +113,16 @@ class CLOTHSIM {
         );
 
         //Add rigid body sphere for collision
-        const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody);
+        // const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene, this.collidableVisibile);
+        // this.particleSystem.addRigidBody(rigidBody);
 
         //Add rigid body box for collision
         // const rigidBody = new BoxBody(new THREE.Vector3(-20, -20, -10), new THREE.Vector3(20, -10, 10), this.scene);
         // this.particleSystem.addRigidBody(rigidBody);
+
+        //Add rigid body capsule for collision
+        const rigidBody = new CapsuleBody(10, 10, new THREE.Vector3(0, -15, 0), this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody);
 
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
