@@ -1,4 +1,4 @@
-import { BoxBody, SphereBody } from "./RigidBody.js"
+import { BoxBody, SphereBody, CapsuleBody} from "./RigidBody.js"
 import { Vector3 } from "three";
 
 export function detectCollisions(particle, rigidBody)
@@ -8,6 +8,9 @@ export function detectCollisions(particle, rigidBody)
 
     if (rigidBody instanceof SphereBody)
         return detectCollisionsSphere(particle, rigidBody);
+
+    if (rigidBody instanceof CapsuleBody)
+        return detectCollisionsCapsule(particle, rigidBody);
 
     return { collision: false };
 }
@@ -21,6 +24,9 @@ export function resolveCollisions(particle, colInfo)
 
     if (rigidBody instanceof SphereBody)
         resolveCollisionsSphere(particle, rigidBody, colInfo);
+
+    if (rigidBody instanceof CapsuleBody)
+        resolveCollisionsCapsule(particle, rigidBody, colInfo);
 }
 
 function detectCollisionsBox(particle, rigidBody)
@@ -47,6 +53,11 @@ function detectCollisionsSphere(particle, rigidBody)
     return { collision: false };
 }
 
+function detectCollisionsCapsule(particle, rigidBody)
+{
+    return { collision: false };
+}
+
 function resolveCollisionsBox(particle, colInfo)
 {
     let correction = colInfo.normal.clone().multiplyScalar(0.001);
@@ -61,4 +72,9 @@ function resolveCollisionsSphere(particle, rigidBody, colInfo)
     const posCorrection = colInfo.normal.clone().multiplyScalar(colDepth); 
 
     particle.pos.add(posCorrection); 
+}
+
+function resolveCollisionsCapsule(particle, rigidBody, colInfo)
+{
+    
 }
