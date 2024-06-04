@@ -51,22 +51,24 @@ class CLOTHSIM {
                     object.children[0].material.side = THREE.DoubleSide;
                 this.scene.add( object );
 
-                const geometry = object.children[0].geometry;
-                const position = geometry.attributes.position;
-            
+                this.geometry = object.children[0].geometry;
+                const position = this.geometry.attributes.position;
+
                 const vertices = [];
                 const numVertices = position.count;
-                //const numVertices = 3;
-            
-                // Define neighborhood radius
-                const neighborhoodRadius = 20; // 
-            
-                // Create spheres representing neighborhoods around each vertex
-                const spheres = [];
+
                 for (let i = 0; i < numVertices; ++i) {
                     const vertex = new THREE.Vector3().fromBufferAttribute(position, i); // Get vertex position
                     vertices.push(vertex);
                 }
+
+                // Define neighborhood radius for links
+                const neighborhoodRadiusDistanceConstraint = 15;
+                const neighborhoodRadiusBendingConstraint = 20;
+
+                // Create spheres representing neighborhoods around each vertex
+                const spheresDistanceConstraint = [];
+                const spheresBendingConstraint = [];
 
                 //Create particle in each vertex
                 for (let i = 0; i < numVertices; ++i)
@@ -78,25 +80,43 @@ class CLOTHSIM {
                     const mass = 1;
                     if (!particle) 
                     {
-                        this.particleSystem.createParticle(mass, vertex);
-                        const sphere = new THREE.Sphere(vertex, neighborhoodRadius);
-                        spheres.push(sphere);
+                        this.particleSystem.createParticle(mass, vertex, i);
+                        const sphereDistanceConstraint = new THREE.Sphere(vertex, neighborhoodRadiusDistanceConstraint);
+                        const sphereBendingConstraint = new THREE.Sphere(vertex, neighborhoodRadiusBendingConstraint);
+                        spheresDistanceConstraint.push(sphereDistanceConstraint);
+                        spheresBendingConstraint.push(sphereBendingConstraint);
                     }
 
                 }
                 
-                //Create links between neighbor particles
+                //Create links between neighbor particles (Distance Constraint)
                 for (let i = 0; i < this.particleSystem.particles.length; ++i)
-                    for (let j = 0; j < spheres.length; ++j)
+                    for (let j = 0; j < spheresDistanceConstraint.length; ++j)
                     {
                         var particle = this.particleSystem.particles[i];
-                        var sphere = spheres[j];
+                        var sphere = spheresDistanceConstraint[j];
 
                         if(sphere.center.equals(particle.pos))
                             continue;
 
                         if(sphere.containsPoint(particle.pos))
-                            this.particleSystem.addLink(particle, this.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
+                            this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
+
+                    }  
+
+                //Create links between neighbor particles (Bending Constraint)
+                for (let i = 0; i < this.particleSystem.particles.length; ++i)
+                    for (let j = 0; j < spheresBendingConstraint.length; ++j)
+                    {
+                        var particle = this.particleSystem.particles[i];
+                        var sphere = spheresBendingConstraint[j];
+
+                        if(sphere.center.equals(particle.pos))
+                            continue;
+
+                        if(sphere.containsPoint(particle.pos))
+                            continue;
+                            // this.particleSystem.addLink(particle, this.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
 
                     }  
 
@@ -113,16 +133,16 @@ class CLOTHSIM {
         );
 
         //Add rigid body sphere for collision
-        // const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene, this.collidableVisibile);
-        // this.particleSystem.addRigidBody(rigidBody);
+        const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody);
 
         //Add rigid body box for collision
         // const rigidBody = new BoxBody(new THREE.Vector3(-20, -20, -10), new THREE.Vector3(20, -10, 10), this.scene);
         // this.particleSystem.addRigidBody(rigidBody);
 
         //Add rigid body capsule for collision
-        const rigidBody = new CapsuleBody(10, 10, new THREE.Vector3(0, -15, 0), this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody);
+        // const rigidBody = new CapsuleBody(10, 10, new THREE.Vector3(0, -15, 0), this.scene, this.collidableVisible);
+        // this.particleSystem.addRigidBody(rigidBody);
 
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
@@ -175,10 +195,27 @@ class CLOTHSIM {
                 this.particleSystem.update(deltaTime, this.substeps);
                 frameTime -= deltaTime;
             }
+
+            // this.updateVerticesFromParticles(this.geometry, this.particleSystem.particles);
         }
         this.renderer.render(this.scene, this.camera);
         
         requestAnimationFrame(this.loop.bind(this));
+    }
+
+    updateVerticesFromParticles(geometry, particles)
+    {
+        const position = geometry.attributes.position;
+
+            particles.forEach(particle => {
+                const index = particle.vertexIndex;
+
+                if(!index) return;
+
+                position.setXYZ(index, particle.pos.x, particle.pos.y, particle.pos.z);
+            });
+
+            position.needsUpdate = true;
     }
 
     onMouseClick(event)

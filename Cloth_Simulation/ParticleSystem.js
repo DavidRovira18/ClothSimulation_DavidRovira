@@ -6,7 +6,7 @@ import { RigidBody } from "./RigidBody.js";
 import { detectCollisions, resolveCollisions } from "./collisions.js";
 
 export class Particle{
-    constructor(id, mass, pos, scene)
+    constructor(id, mass, pos, index, scene)
     {
         if (! (pos instanceof Vector3))
             console.error("Position is not a Vector3")
@@ -28,6 +28,8 @@ export class Particle{
         this.material = new MeshBasicMaterial({ color: 0xff0000 });
         this.mesh = new Mesh(this.geometry, this.material);
         scene.add(this.mesh);
+
+        this.vertexIndex = index;
 
         this.mesh.position.copy(this.pos)
 
@@ -67,7 +69,7 @@ export class Particle{
     }
 }
 
-export class Link{
+export class LinkDistanceConstraint{
     constructor(particle1, particle2, scene)
     {
         this.particle1 = particle1;
@@ -154,9 +156,9 @@ export class ParticleSystem{
         this.scene = scene;
     }
 
-    createParticle(mass, pos)
+    createParticle(mass, pos, index)
     {
-        this.particles.push(new Particle(this.idCount, mass, pos, this.scene));
+        this.particles.push(new Particle(this.idCount, mass, pos, index, this.scene));
         this.idCount++
     }
 
@@ -216,20 +218,20 @@ export class LinksSystem extends ParticleSystem{
     constructor(scene)
     {
         super(scene)
-        this.links = [];
-        this.idLinks = [];
-        this.adjTriLinks = [];
+        this.linksDistanceConstraint = [];
+        this.idLinksDistanceConstraint = [];
+        this.linksBendingConstraint = [];
         this.scene = scene;
     }
 
-    addLink(particle1, particle2) //Create spring between particles
+    addLinkDistanceConstraint(particle1, particle2) //Create spring between particles
     {
         // prevent repeated links
-        if (this.idLinks.find((el) => {if (el[0] == particle1.id && el[1] == particle2.id) return true;}) || this.idLinks.find((el) => {if (el[0] == particle2.id && el[1] == particle1.id) return true;}))
+        if (this.idLinksDistanceConstraint.find((el) => {if (el[0] == particle1.id && el[1] == particle2.id) return true;}) || this.idLinksDistanceConstraint.find((el) => {if (el[0] == particle2.id && el[1] == particle1.id) return true;}))
             return;
 
-        this.idLinks.push([particle1.id, particle2.id]);
-        this.links.push(new Link(particle1, particle2, this.scene));
+        this.idLinksDistanceConstraint.push([particle1.id, particle2.id]);
+        this.linksDistanceConstraint.push(new LinkDistanceConstraint(particle1, particle2, this.scene));
     }
 
     update(dt, substeps) {
@@ -248,7 +250,7 @@ export class LinksSystem extends ParticleSystem{
                 SemiImplicitEulerIntegrator(particle, ts); // Compute predicted position
             });
 
-            this.links.forEach((link) => {
+            this.linksDistanceConstraint.forEach((link) => {
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
             });
 
@@ -265,7 +267,7 @@ export class LinksSystem extends ParticleSystem{
             particle.mesh.position.copy(particle.pos);
         })
         
-        this.links.forEach((link) => {
+        this.linksDistanceConstraint.forEach((link) => {
             link.updateLinkMesh();
         })
 
