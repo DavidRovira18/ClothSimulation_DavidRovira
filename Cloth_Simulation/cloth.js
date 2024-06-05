@@ -120,15 +120,54 @@ class CLOTHSIM {
                         {
                             var quadrant = this.getQuadrant(sphere.center, particle.pos);
 
-                            if (quadrant == 1)
-                                firstQuadrant.push(particle);
+                            if (quadrant)
+                            {
+                                const vector = new THREE.Vector3(0,0,-1);
+                                var dirVector = particle.pos.clone().sub(sphere.center);
+                                var angle = vector.angleTo(dirVector).toPrecision(3);
+                            
+                                if (quadrant == 1)
+                                {
+                                    if (angle == 0)
+                                        {
+                                            if(sphere.center.equals(particle.pos))
+                                                firstQuadrant[1] = particle;
 
-                            if (quadrant == 2)
-                                secondQuadrant.push(particle)
+                                            else
+                                                firstQuadrant[0] = particle;
+                                        }
+
+                                    if(angle == 1.57)
+                                        firstQuadrant[3] = particle;
+
+                                    else
+                                        firstQuadrant[2] = particle;
+                                }
+                                if (quadrant == 2)
+                                    {
+                                        if (angle == 0)
+                                            {
+                                                if(sphere.center.equals(particle.pos))
+                                                    secondQuadrant[1] = particle;
+    
+                                                else
+                                                    secondQuadrant[0] = particle;
+                                            }
+    
+                                        if(angle == 1.57)
+                                            secondQuadrant[3] = particle;
+    
+                                        else
+                                            secondQuadrant[2] = particle;
+                                    }
+                            } 
+
                         }
 
                     }
 
+                    console.log(firstQuadrant)
+                    console.log(secondQuadrant)
                     if (firstQuadrant.length == 4)
                         this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3])
                     
