@@ -100,25 +100,42 @@ class CLOTHSIM {
                             continue;
 
                         if(sphere.containsPoint(particle.pos))
-                            this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
+                            this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j]);
 
                     }  
 
                 //Create links between neighbor particles (Bending Constraint)
-                for (let i = 0; i < this.particleSystem.particles.length; ++i)
-                    for (let j = 0; j < spheresBendingConstraint.length; ++j)
-                    {
-                        var particle = this.particleSystem.particles[i];
-                        var sphere = spheresBendingConstraint[j];
+                for (let i = 0; i < spheresBendingConstraint.length; ++i)
+                {
+                    const firstQuadrant = [];
+                    const secondQuadrant = [];
 
-                        if(sphere.center.equals(particle.pos))
-                            continue;
+                    var sphere = spheresBendingConstraint[i];
+
+                    for (let j = 0; j < this.particleSystem.particles.length; ++j)
+                    {
+                        var particle = this.particleSystem.particles[j];
 
                         if(sphere.containsPoint(particle.pos))
-                            continue;
-                            // this.particleSystem.addLink(particle, this.particleSystem.particles[j]); //THIS WORKS BUT TJERE ARE REPETED LINKS think how to solve that
+                        {
+                            var quadrant = this.getQuadrant(sphere.center, particle.pos);
 
-                    }  
+                            if (quadrant == 1)
+                                firstQuadrant.push(particle);
+
+                            if (quadrant == 2)
+                                secondQuadrant.push(particle)
+                        }
+
+                    }
+
+                    if (firstQuadrant.length == 4)
+                        this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3])
+                    
+                    if (secondQuadrant.length == 4)
+                        this.particleSystem.addLinkBendingConstraint(secondQuadrant[0], secondQuadrant[1], secondQuadrant[2], secondQuadrant[3])
+
+                }
 
                 this.loop();
             },
@@ -216,6 +233,23 @@ class CLOTHSIM {
             });
 
             position.needsUpdate = true;
+    }
+
+    getQuadrant(sphereCenter, point) //Determine in which quadrant is a point relative to a sphere center
+    {
+        const dx = point.x - sphereCenter.x;
+        const dz = point.z - sphereCenter.z;
+
+        //Only interested in quadrants where the particle is further away in z-axis respect to the sphere center (to avoid repeated links)
+        if(dz <= 0)
+        {
+            if(dx < 0) 
+                return 1; //First quadrant (left one)
+
+            if (dx >= 0) 
+                return 2; //Second quadrant (right one)
+        }
+        return;
     }
 
     onMouseClick(event)
