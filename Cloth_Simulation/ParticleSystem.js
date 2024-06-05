@@ -135,6 +135,18 @@ export class LinkBendingConstraint{
 
         scene.add(this.springMesh)
     }
+
+    updateLinkMesh() {
+        // Compute position
+        const midpoint = new Vector3().copy(this.particle2.pos).add(this.particle3.pos).multiplyScalar(0.5);
+        this.springMesh.position.copy(midpoint);
+
+        // Compute rotation
+        const direction = new Vector3().copy(this.particle2.pos).sub(this.particle3.pos).normalize();
+        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
+        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
+        this.springMesh.quaternion.copy(quaternion);
+    }
 }
 
 export class ParticleSystem{
@@ -253,6 +265,11 @@ export class LinksSystem extends ParticleSystem{
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
             });
 
+            //Fastest and easiest implementation of bending constraint using distance constraint
+            this.linksBendingConstraint.forEach((link) => {
+                solveDistanceConstraint(link.particle2, link.particle3, link.r, 0.01, ts); // Solve bending constraints
+            });
+
             this.resolveCols();            
 
             // Update velocities based on the corrected positions
@@ -267,6 +284,10 @@ export class LinksSystem extends ParticleSystem{
         })
         
         this.linksDistanceConstraint.forEach((link) => {
+            link.updateLinkMesh();
+        })        
+        
+        this.linksBendingConstraint.forEach((link) => {
             link.updateLinkMesh();
         })
 

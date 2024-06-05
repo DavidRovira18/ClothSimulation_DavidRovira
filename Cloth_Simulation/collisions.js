@@ -45,7 +45,7 @@ function detectCollisionsBox(particle, rigidBody)
 function detectCollisionsSphere(particle, rigidBody)
 {
     const distance = particle.pos.distanceTo(rigidBody.center);
-    if (distance < rigidBody.radius + 1) { 
+    if (distance < rigidBody.radius) { 
         const collisionNormal = particle.pos.clone().sub(rigidBody.center).normalize();
         const collisionPoint = rigidBody.center.clone().add(collisionNormal.clone().multiplyScalar(rigidBody.radius));
         return { collision: true, rigidBody: rigidBody, point: collisionPoint, normal: collisionNormal };

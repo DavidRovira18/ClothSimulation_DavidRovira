@@ -6,7 +6,6 @@ import { BoxBody, CapsuleBody, SphereBody } from './RigidBody.js';
 
 (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
-
 class CLOTHSIM {
     constructor() {
         // scene attributes
@@ -107,8 +106,8 @@ class CLOTHSIM {
                 //Create links between neighbor particles (Bending Constraint)
                 for (let i = 0; i < spheresBendingConstraint.length; ++i)
                 {
-                    const firstQuadrant = [];
-                    const secondQuadrant = [];
+                    const firstQuadrant = [null, null, null, null];
+                    const secondQuadrant = [null, null, null, null];
 
                     var sphere = spheresBendingConstraint[i];
 
@@ -118,24 +117,26 @@ class CLOTHSIM {
 
                         if(sphere.containsPoint(particle.pos))
                         {
-                            var quadrant = this.getQuadrant(sphere.center, particle.pos);
+                            var quadrant = this.getQuadrant(sphere.center, particle.pos); //Get quadrant to classify particles in first or second quadrant
+
+                            if(sphere.center.equals(particle.pos))
+                            {
+                                firstQuadrant[1] = particle;
+                                secondQuadrant[1] = particle;
+                                continue;
+                            }
 
                             if (quadrant)
                             {
-                                const vector = new THREE.Vector3(0,0,-1);
+                                const referenceVector = new THREE.Vector3(0,0,-1);
                                 var dirVector = particle.pos.clone().sub(sphere.center);
-                                var angle = vector.angleTo(dirVector).toPrecision(3);
-                            
+                                var angle = referenceVector.angleTo(dirVector).toPrecision(3);
+
                                 if (quadrant == 1)
                                 {
+                                    
                                     if (angle == 0)
-                                        {
-                                            if(sphere.center.equals(particle.pos))
-                                                firstQuadrant[1] = particle;
-
-                                            else
-                                                firstQuadrant[0] = particle;
-                                        }
+                                        firstQuadrant[0] = particle;
 
                                     if(angle == 1.57)
                                         firstQuadrant[3] = particle;
@@ -144,36 +145,37 @@ class CLOTHSIM {
                                         firstQuadrant[2] = particle;
                                 }
                                 if (quadrant == 2)
-                                    {
-                                        if (angle == 0)
-                                            {
-                                                if(sphere.center.equals(particle.pos))
-                                                    secondQuadrant[1] = particle;
-    
-                                                else
-                                                    secondQuadrant[0] = particle;
-                                            }
-    
-                                        if(angle == 1.57)
-                                            secondQuadrant[3] = particle;
-    
-                                        else
-                                            secondQuadrant[2] = particle;
-                                    }
+                                {
+                                    if (angle == 0)
+                                        secondQuadrant[0] = particle;
+                                            
+                                    if(angle == 1.57)
+                                        secondQuadrant[3] = particle;
+                                    
+                                    else
+                                        secondQuadrant[2] = particle;
+                                }
+
+                                if (quadrant == -1) 
+                                {
+                                    firstQuadrant[0] = particle;
+                                    secondQuadrant[0] = particle;
+                                }
                             } 
-
                         }
-
                     }
 
-                    console.log(firstQuadrant)
-                    console.log(secondQuadrant)
-                    if (firstQuadrant.length == 4)
-                        this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3])
+                    if (!firstQuadrant.includes(null))
+                        {
+                            console.log(firstQuadrant)
+                            this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3])
+                        }
                     
-                    if (secondQuadrant.length == 4)
-                        this.particleSystem.addLinkBendingConstraint(secondQuadrant[0], secondQuadrant[1], secondQuadrant[2], secondQuadrant[3])
-
+                    if (!secondQuadrant.includes(null))
+                        {
+                            console.log(secondQuadrant)
+                            this.particleSystem.addLinkBendingConstraint(secondQuadrant[0], secondQuadrant[1], secondQuadrant[2], secondQuadrant[3])
+                        }
                 }
 
                 this.loop();
@@ -189,7 +191,7 @@ class CLOTHSIM {
         );
 
         //Add rigid body sphere for collision
-        const rigidBody = new SphereBody(new THREE.Vector3(0, -15   , 0), 15, this.scene, this.collidableVisible);
+        const rigidBody = new SphereBody(new THREE.Vector3(0, -30   , 0), 15, this.scene, this.collidableVisible);
         this.particleSystem.addRigidBody(rigidBody);
 
         //Add rigid body box for collision
@@ -285,8 +287,11 @@ class CLOTHSIM {
             if(dx < 0) 
                 return 1; //First quadrant (left one)
 
-            if (dx >= 0) 
+            if (dx > 0) 
                 return 2; //Second quadrant (right one)
+
+            if(dx == 0)
+                return -1 //Front direction
         }
         return;
     }
