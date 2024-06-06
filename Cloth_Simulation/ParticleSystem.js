@@ -1,7 +1,7 @@
 //3D particle system implementation
 import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
-import { solveDistanceConstraint } from "./constraints.js";
+import { solveBendingConstraint, solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
 import { detectCollisions, resolveCollisions } from "./collisions.js";
 
@@ -265,10 +265,14 @@ export class LinksSystem extends ParticleSystem{
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
             });
 
-            //Fastest and easiest implementation of bending constraint using distance constraint
+            // //Fastest and easiest implementation of bending constraint using distance constraint
             this.linksBendingConstraint.forEach((link) => {
                 solveDistanceConstraint(link.particle2, link.particle3, link.r, 0.01, ts); // Solve bending constraints
             });
+
+            // this.linksBendingConstraint.forEach((link) => {
+            //     solveBendingConstraint(link.particle1, link.particle2, link.particle3, link.particle4, 0.01, ts); // Solve bending constraints
+            // });
 
             this.resolveCols();            
 

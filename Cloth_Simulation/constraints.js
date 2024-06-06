@@ -28,24 +28,34 @@ export function solveDistanceConstraint(particle1, particle2, r, compliance, dt)
     particle2.pos.add(deltaX2);
 }
 
-export function solveBendingConstraint(particle1, particle2, particle3, particle4, compliance, dt)
-{
-    const alpha = compliance / (dt * dt);
-    const particles = [particle1, particle2, particle3, particle4];
+const vecAdd = (a, b) => a.map((val, i) => val + b[i]);
+const vecScale = (a, s) => a.map(el => el * s);
+const vecSub = (a, b) => a.map((val, i) => val - b[i]);
+const vecDot = (a, b) => a.reduce((sum, val, i) => sum + val * b[i], 0);
+const vecCross = (a, b) => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+];
+const vecNorm = a => Math.sqrt(vecDot(a, a));
 
-    const x0 = particles[0].pos;
-    const x1 = particles[1].pos;
-    const x2 = particles[2].pos;
-    const x3 = particles[3].pos;
+const cotTheta = (a, b) => vecDot(a, b) / vecNorm(vecCross(a, b));
 
-    const e0 = x1.clone().sub(x0);
-    const e1 = x2.clone().sub(x1);
-    const e2 = x0.clone().sub(x2);
-    const e3 = x3.clone().sub(x0);
-    const e4 = x1.clone().sub(x3);
+const multiply4dColumnVectorByTranspose = a => a.map((val1, i) => a.map(val2 => val1[0] * val2[0]));
+const matrixScale = (a, s) => a.map(arr => vecScale(arr, s));
+const vecScalarWiseMultiply = (a, b) => a.map((val, i) => val * b[i]);
 
-    const cot01 = cotTheta(e0, e1.multiplyScalar(-1));
-    const cot02 = cotTheta(e0, e2.multiplyScalar(-1));
+const initBendingConstraint = particles => {
+    const x = particles.map(p => [p.pos.x, p.pos.y, p.pos.z]);
+
+    const e0 = vecSub(x[1], x[0]);
+    const e1 = vecSub(x[2], x[1]);
+    const e2 = vecSub(x[0], x[2]);
+    const e3 = vecSub(x[3], x[0]);
+    const e4 = vecSub(x[1], x[3]);
+
+    const cot01 = cotTheta(e0, vecScale(e1, -1));
+    const cot02 = cotTheta(e0, vecScale(e2, -1));
     const cot03 = cotTheta(e0, e3);
     const cot04 = cotTheta(e0, e4);
 
@@ -56,88 +66,63 @@ export function solveBendingConstraint(particle1, particle2, particle3, particle
         [-cot03 - cot04],
     ];
 
-    const e0_x_e1 = e0.clone().cross(e1);
-    const e0_x_e3 = e0.clone().cross(e3);
-    const A0 = 0.5 * e0_x_e1.length();
-    const A1 = 0.5 * e0_x_e3.length();
+    const A0 = 0.5 * vecNorm(vecCross(e0, e1));
+    const A1 = 0.5 * vecNorm(vecCross(e0, e3));
 
-    const wMatrix = new Array(particles.length * 3);
-    for (let i = 0; i < particles.length * 3; ++i) 
-        wMatrix[i] = particles[Math.floor(i / 3)].w;
-    
+    return matrixScale(multiply4dColumnVectorByTranspose(K), 3.0 / (A0 + A1));
+};
 
-    const Q = matrixScale(multiply4dColumnVectorByTranspose(K), 3.0 / (A0 + A1));
+const calculateConstraintValue = (Q, particles) => {
+    let sum = 0;
+    const x = particles.map(p => [p.pos.x, p.pos.y, p.pos.z]);
 
-    var sumQ = 0;
-    
-    for (var i = 0; i < 4; ++i) 
-        for (var j = 0; j < 4; ++j) 
-            sumQ += Q[i][j] * particles[i].pos.clone().dot(particles[j].pos);
-        
-      
-    C = 0.5 * sumQ;
+    for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+            sum += Q[i][j] * vecDot(x[i], x[j]);
+        }
+    }
 
-    if (C < 1e-12) return;
+    return 0.5 * sum;
+};
 
-    const grad = calculateGradBend(Q, particles);
+const calculateGrad = (Q, particles) => {
+    const grad = Array(4).fill().map(() => [0, 0, 0]);
+    const x = particles.map(p => [p.pos.x, p.pos.y, p.pos.z]);
 
-    const grad_w = grad.clone().multiply(wMatrix); 
-    const lagrangianMultiplier = - C / (grad_w.clone().dot(grad) + alpha);
+    for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+            grad[i] = vecAdd(grad[i], vecScale(x[j], Q[i][j]));
+        }
+    }
 
-    const w_lagrangian = wMatrix.clone().multiplyScalar(lagrangianMultiplier) 
-    const deltaX = w_lagrangian.clone().multiply(grad);
+    return grad;
+};
 
-    const deltaX1 = new Vector3(...deltaX.slice(0,3));
-    const deltaX2 = new Vector3(...deltaX.slice(3,6));
-    const deltaX3 = new Vector3(...deltaX.slice(6,9));
-    const deltaX4 = new Vector3(...deltaX.slice(9,12));
-    
+export function solveBendingConstraint(particle1, particle2, particle3, particle4, compliance, dt) {
+    const alpha = compliance / (dt * dt);
+
+    const particles = [particle1, particle2, particle3, particle4];
+
+    const wMatrix = new Array(particles.length * 3).fill(0).map((_, i) => particles[Math.floor(i / 3)].w);
+
+    const Q = initBendingConstraint(particles);
+
+    const C = calculateConstraintValue(Q, particles); // calculate the current constraint value
+    if (C < 1e-12) {
+        return;
+    }
+
+    const grad = calculateGrad(Q, particles).flat();
+    const deltaLagrangianMultiplier = -C / (vecDot(vecScalarWiseMultiply(grad, wMatrix), grad) + alpha);
+    const deltaX = vecScalarWiseMultiply(vecScale(wMatrix, deltaLagrangianMultiplier), grad);
+
+    const deltaX1 = new Vector3(...deltaX.slice(0, 3));
+    const deltaX2 = new Vector3(...deltaX.slice(3, 6));
+    const deltaX3 = new Vector3(...deltaX.slice(6, 9));
+    const deltaX4 = new Vector3(...deltaX.slice(9, 12));
+
     particle1.pos.add(deltaX1);
     particle2.pos.add(deltaX2);
     particle3.pos.add(deltaX3);
     particle4.pos.add(deltaX4);
-}
-
-function cotTheta (a, b)
-{
-    const cosTheta = a.clone().dot(b);
-    const cross = a.clone().cross(b);
-    const sinTheta = cross.length();
-  
-    return cosTheta / sinTheta;
 };
-
-function matrixScale(a, s)
-{
-    return a.map((arr) => {
-      return arr.multiplyScalar(s);
-    });
-};
-
-function multiply4dColumnVectorByTranspose(a)
-{
-    const out = [[], [], [], []];
-
-    for (let i = 0; i < 4; ++i) {
-        for (let j = 0; j < 4; ++j) {
-        out[i][j] = a[i] * a[j];
-        }
-    }
-
-    return out;
-};
-
-function calculateGradBend(Q, particles)
-{
-    const grad = [];
-    for (let i = 0; i < 4; ++i) {
-      let sum = [0, 0, 0];
-      for (let j = 0; j < 4; ++j) {
-        sum = sum.clone().add(particles[j].pos.clone().multiplyScalar(Q[i][j]));
-      }
-  
-      grad[i] = sum;
-    }
-  
-    return grad.flat();
-  };

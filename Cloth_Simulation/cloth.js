@@ -166,16 +166,11 @@ class CLOTHSIM {
                     }
 
                     if (!firstQuadrant.includes(null))
-                        {
-                            console.log(firstQuadrant)
-                            this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3])
-                        }
+                            this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3]);
                     
                     if (!secondQuadrant.includes(null))
-                        {
-                            console.log(secondQuadrant)
                             this.particleSystem.addLinkBendingConstraint(secondQuadrant[0], secondQuadrant[1], secondQuadrant[2], secondQuadrant[3])
-                        }
+                        
                 }
 
                 this.loop();
