@@ -98,7 +98,8 @@ const calculateGrad = (Q, particles) => {
     return grad;
 };
 
-export function solveBendingConstraint(particle1, particle2, particle3, particle4, compliance, dt) {
+export function solveBendingConstraint(particle1, particle2, particle3, particle4, compliance, dt) 
+{
     const alpha = compliance / (dt * dt);
 
     const particles = [particle1, particle2, particle3, particle4];
@@ -126,3 +127,35 @@ export function solveBendingConstraint(particle1, particle2, particle3, particle
     particle3.pos.add(deltaX3);
     particle4.pos.add(deltaX4);
 };
+
+export function triangleArea(triangle)
+{
+    const A = particle1.pos;
+    const B = particle2.pos;
+    const C = particle3.pos;
+
+    const AB = B.clone().sub(A);
+    const AC = C.clone().sub(A);
+    return 0.5 * Math.abs(AB.cross(AC));
+}
+
+export function solveAreaConservationConstraint(particle1, particle2, particle3, particle4, initialArea1, initialArea2)
+{
+    const triangle1 = [particle1, particle2, particle3];
+    const triangle2 = [particle2, particle3, particle4];
+
+    const totalWeight1 = particle1.w + particle2.w + particle3.w;
+    const totalWeight2 = particle2.w + particle3.w + particle4.w;
+
+    const area1 = triangleArea(triangle1);
+    const area2 = triangleArea(triangle2);
+
+    const diff1 = area1 - initialArea1;
+    const diff2 = area2 - initialArea2;
+
+    //COMPUTE TRIANGLES GRADIENT A,B,C
+
+    //COMPUTE LAGRANGIAN MULTIPLIER
+
+    //APPLY CORRECTION TO EACH PARTICLE
+}

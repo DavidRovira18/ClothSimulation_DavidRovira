@@ -11,6 +11,7 @@ class CLOTHSIM {
         // scene attributes
         this.scene = null;
         this.renderer = null;
+        this.clothMass = 1;
         this.dt = 1/60;
         this.substeps = 3; 
         this.collidableVisible = true;
@@ -43,7 +44,7 @@ class CLOTHSIM {
         this.loader.setPath('./models/');
         this.loader.load(
             // resource URL
-            'cloth.obj',
+            'cloth_final.obj',
             // called when resource is loaded
             ( object ) => {
                 if (object.children[0] instanceof THREE.Mesh)
@@ -62,8 +63,8 @@ class CLOTHSIM {
                 }
 
                 // Define neighborhood radius for links
-                const neighborhoodRadiusDistanceConstraint = 15;
-                const neighborhoodRadiusBendingConstraint = 20;
+                const neighborhoodRadiusDistanceConstraint = 3;
+                const neighborhoodRadiusBendingConstraint = 6;
 
                 // Create spheres representing neighborhoods around each vertex
                 const spheresDistanceConstraint = [];
@@ -76,10 +77,9 @@ class CLOTHSIM {
                     var particle = this.particleSystem.getParticleFromPos(vertex);
 
                     // If no particle in position, create particle and add it to particleSystem
-                    const mass = 1;
                     if (!particle) 
                     {
-                        this.particleSystem.createParticle(mass, vertex, i);
+                        this.particleSystem.createParticle(this.clothMass, vertex, i);
                         const sphereDistanceConstraint = new THREE.Sphere(vertex, neighborhoodRadiusDistanceConstraint);
                         const sphereBendingConstraint = new THREE.Sphere(vertex, neighborhoodRadiusBendingConstraint);
                         spheresDistanceConstraint.push(sphereDistanceConstraint);

@@ -1,7 +1,7 @@
 //3D particle system implementation
 import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
-import { solveBendingConstraint, solveDistanceConstraint } from "./constraints.js";
+import { solveBendingConstraint, solveDistanceConstraint, solveVolumeConservationConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
 import { detectCollisions, resolveCollisions } from "./collisions.js";
 
@@ -117,6 +117,12 @@ export class LinkBendingConstraint{
         this.particle4 = particle4;
 
         this.r = particle2.pos.distanceTo(particle3.pos); //Resting length
+
+        //Area conservation constraint
+        const triangle1 = [particle1, particle2, particle3];
+        const triangle2 = [particle2, particle3, particle4];
+        this.initialArea1 = triangleArea(triangle1);
+        this.initialArea2 = triangleArea(triangle2);
 
         //Spring mesh
         const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
@@ -265,7 +271,7 @@ export class LinksSystem extends ParticleSystem{
                 solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
             });
 
-            // //Fastest and easiest implementation of bending constraint using distance constraint
+            //Fastest and easiest implementation of bending constraint using distance constraint
             this.linksBendingConstraint.forEach((link) => {
                 solveDistanceConstraint(link.particle2, link.particle3, link.r, 0.01, ts); // Solve bending constraints
             });
@@ -273,6 +279,10 @@ export class LinksSystem extends ParticleSystem{
             // this.linksBendingConstraint.forEach((link) => {
             //     solveBendingConstraint(link.particle1, link.particle2, link.particle3, link.particle4, 0.01, ts); // Solve bending constraints
             // });
+
+            this.linksBendingConstraint.forEach((link) => {
+                solveVolumeConservationConstraint(link.particle1, link.particle2, link.particle3, link.particle4, link.initialArea1, link.initialArea2);
+            })
 
             this.resolveCols();            
 
@@ -294,11 +304,6 @@ export class LinksSystem extends ParticleSystem{
         this.linksBendingConstraint.forEach((link) => {
             link.updateLinkMesh();
         })
-
-
-        // this.links.forEach((link) => {
-        //             link.update(dt,substeps)
-        //         });
     }
 }
 
