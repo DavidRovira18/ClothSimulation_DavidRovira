@@ -28,7 +28,7 @@ export function solveDistanceConstraint(particle1, particle2, r, compliance, dt)
     particle2.pos.add(deltaX2);
 }
 
-export function solveBendingConstraint(particle1, particle2, particle3, particle4, r, compliance, dt)
+export function solveBendingConstraint(particle1, particle2, particle3, particle4, compliance, dt)
 {
     const alpha = compliance / (dt * dt);
     const particles = [particle1, particle2, particle3, particle4];
@@ -56,19 +56,46 @@ export function solveBendingConstraint(particle1, particle2, particle3, particle
         [-cot03 - cot04],
     ];
 
-  const A0 = 0.5 * vecNorm(vecCross(e0, e1));
-  const A1 = 0.5 * vecNorm(vecCross(e0, e3));
+    const e0_x_e1 = e0.clone().cross(e1);
+    const e0_x_e3 = e0.clone().cross(e3);
+    const A0 = 0.5 * e0_x_e1.length();
+    const A1 = 0.5 * e0_x_e3.length();
 
-  const Q = matrixScale(multiply4dColumnVectorByTranspose(K), 3.0 / (A0 + A1));
+    const wMatrix = new Array(particles.length * 3);
+    for (let i = 0; i < particles.length * 3; ++i) 
+        wMatrix[i] = particles[Math.floor(i / 3)].w;
+    
 
-    const sumQ = 0;
+    const Q = matrixScale(multiply4dColumnVectorByTranspose(K), 3.0 / (A0 + A1));
+
+    var sumQ = 0;
     
     for (var i = 0; i < 4; ++i) 
         for (var j = 0; j < 4; ++j) 
-            sumQ += Q[i][j] * vecDot(particles[i].p, particles[j].p);
+            sumQ += Q[i][j] * particles[i].pos.clone().dot(particles[j].pos);
         
       
     C = 0.5 * sumQ;
+
+    if (C < 1e-12) return;
+
+    const grad = calculateGradBend(Q, particles);
+
+    const grad_w = grad.clone().multiply(wMatrix); 
+    const lagrangianMultiplier = - C / (grad_w.clone().dot(grad) + alpha);
+
+    const w_lagrangian = wMatrix.clone().multiplyScalar(lagrangianMultiplier) 
+    const deltaX = w_lagrangian.clone().multiply(grad);
+
+    const deltaX1 = new Vector3(...deltaX.slice(0,3));
+    const deltaX2 = new Vector3(...deltaX.slice(3,6));
+    const deltaX3 = new Vector3(...deltaX.slice(6,9));
+    const deltaX4 = new Vector3(...deltaX.slice(9,12));
+    
+    particle1.pos.add(deltaX1);
+    particle2.pos.add(deltaX2);
+    particle3.pos.add(deltaX3);
+    particle4.pos.add(deltaX4);
 }
 
 function cotTheta (a, b)
@@ -79,3 +106,38 @@ function cotTheta (a, b)
   
     return cosTheta / sinTheta;
 };
+
+function matrixScale(a, s)
+{
+    return a.map((arr) => {
+      return arr.multiplyScalar(s);
+    });
+};
+
+function multiply4dColumnVectorByTranspose(a)
+{
+    const out = [[], [], [], []];
+
+    for (let i = 0; i < 4; ++i) {
+        for (let j = 0; j < 4; ++j) {
+        out[i][j] = a[i] * a[j];
+        }
+    }
+
+    return out;
+};
+
+function calculateGradBend(Q, particles)
+{
+    const grad = [];
+    for (let i = 0; i < 4; ++i) {
+      let sum = [0, 0, 0];
+      for (let j = 0; j < 4; ++j) {
+        sum = sum.clone().add(particles[j].pos.clone().multiplyScalar(Q[i][j]));
+      }
+  
+      grad[i] = sum;
+    }
+  
+    return grad.flat();
+  };
