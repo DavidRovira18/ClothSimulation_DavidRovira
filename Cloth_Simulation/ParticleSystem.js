@@ -1,7 +1,7 @@
 //3D particle system implementation
 import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
-import { solveBendingConstraint, solveDistanceConstraint, solveVolumeConservationConstraint } from "./constraints.js";
+import { solveBendingConstraint, solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
 import { detectCollisions, resolveCollisions } from "./collisions.js";
 
@@ -24,7 +24,7 @@ export class Particle{
 
         this.attached = false;
 
-        this.geometry = new SphereGeometry(1, 32, 32);
+        this.geometry = new SphereGeometry(0.3, 32, 32);
         this.material = new MeshBasicMaterial({ color: 0xff0000 });
         this.mesh = new Mesh(this.geometry, this.material);
         scene.add(this.mesh);
@@ -32,9 +32,6 @@ export class Particle{
         this.vertexIndex = index;
 
         this.mesh.position.copy(this.pos)
-
-        this.BB = new Sphere(this.pos, 1); //BoundingSphere for collisions
-        this.grounded = false;
     }
 
     applyForce(force)
@@ -117,12 +114,6 @@ export class LinkBendingConstraint{
         this.particle4 = particle4;
 
         this.r = particle2.pos.distanceTo(particle3.pos); //Resting length
-
-        //Area conservation constraint
-        const triangle1 = [particle1, particle2, particle3];
-        const triangle2 = [particle2, particle3, particle4];
-        this.initialArea1 = triangleArea(triangle1);
-        this.initialArea2 = triangleArea(triangle2);
 
         //Spring mesh
         const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
@@ -208,10 +199,14 @@ export class ParticleSystem{
     detectCols() 
     {
         this.particles.forEach((particle) => {
-            this.rigidBodies.forEach((rigidBody) => {
+            for (var i = 0; i < this.rigidBodies.length; ++i)
+            {
+                const rigidBody = this.rigidBodies[i];
                 const colInfo = detectCollisions(particle, rigidBody);
                 particle.colInfo = colInfo; //Store collision info at each particle
-            });
+                if(particle.colInfo.collision)
+                    break;
+            }
         });
     }
 
@@ -219,7 +214,7 @@ export class ParticleSystem{
     {
         this.particles.forEach((particle) => {
             if(particle.colInfo.collision)
-               resolveCollisions(particle, particle.colInfo); 
+                    resolveCollisions(particle, particle.colInfo); 
         })
     }
 }
@@ -268,21 +263,17 @@ export class LinksSystem extends ParticleSystem{
             });
 
             this.linksDistanceConstraint.forEach((link) => {
-                solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.01, ts); // Solve distance constraints
+                solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.001, ts); // Solve distance constraints
             });
 
             //Fastest and easiest implementation of bending constraint using distance constraint
             this.linksBendingConstraint.forEach((link) => {
-                solveDistanceConstraint(link.particle2, link.particle3, link.r, 0.01, ts); // Solve bending constraints
+                solveDistanceConstraint(link.particle2, link.particle3, link.r, 0.001, ts); // Solve bending constraints
             });
 
             // this.linksBendingConstraint.forEach((link) => {
             //     solveBendingConstraint(link.particle1, link.particle2, link.particle3, link.particle4, 0.01, ts); // Solve bending constraints
             // });
-
-            this.linksBendingConstraint.forEach((link) => {
-                solveVolumeConservationConstraint(link.particle1, link.particle2, link.particle3, link.particle4, link.initialArea1, link.initialArea2);
-            })
 
             this.resolveCols();            
 

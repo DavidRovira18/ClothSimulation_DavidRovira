@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Particle, ParticleSystem, LinksSystem } from './ParticleSystem.js';
-import { BoxBody, CapsuleBody, SphereBody } from './RigidBody.js';
+import { BoxBody, SphereBody } from './RigidBody.js';
 
 (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
@@ -14,7 +14,7 @@ class CLOTHSIM {
         this.clothMass = 1;
         this.dt = 1/60;
         this.substeps = 3; 
-        this.collidableVisible = true;
+        this.collidableVisible = false;
     }
     
     init() {
@@ -43,15 +43,37 @@ class CLOTHSIM {
         this.loader = new OBJLoader();
         this.loader.setPath('./models/');
         this.loader.load(
+            'female.obj',
+            (object) => {
+                if (object.children[0] instanceof THREE.Mesh)
+                    object.children[0].material.side = THREE.DoubleSide;
+                this.scene.add( object );
+            },
+            // called when loading is in progress
+            ( xhr ) => {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            // called when loading has errors
+            ( error ) => {
+                console.error('An error occurred while loading the OBJ file:', error);
+            }
+
+        )
+        this.loader.load(
             // resource URL
-            'cloth_final.obj',
+            'cape.obj',
             // called when resource is loaded
             ( object ) => {
                 if (object.children[0] instanceof THREE.Mesh)
                     object.children[0].material.side = THREE.DoubleSide;
+
+                object.position.set(0,91,-22);
+                object.updateMatrixWorld();
+                
                 this.scene.add( object );
 
                 this.geometry = object.children[0].geometry;
+
                 const position = this.geometry.attributes.position;
 
                 const vertices = [];
@@ -59,11 +81,14 @@ class CLOTHSIM {
 
                 for (let i = 0; i < numVertices; ++i) {
                     const vertex = new THREE.Vector3().fromBufferAttribute(position, i); // Get vertex position
+
+                    vertex.applyMatrix4(object.matrixWorld);
+
                     vertices.push(vertex);
                 }
 
                 // Define neighborhood radius for links
-                const neighborhoodRadiusDistanceConstraint = 3;
+                const neighborhoodRadiusDistanceConstraint = 2;
                 const neighborhoodRadiusBendingConstraint = 6;
 
                 // Create spheres representing neighborhoods around each vertex
@@ -80,6 +105,7 @@ class CLOTHSIM {
                     if (!particle) 
                     {
                         this.particleSystem.createParticle(this.clothMass, vertex, i);
+
                         const sphereDistanceConstraint = new THREE.Sphere(vertex, neighborhoodRadiusDistanceConstraint);
                         const sphereBendingConstraint = new THREE.Sphere(vertex, neighborhoodRadiusBendingConstraint);
                         spheresDistanceConstraint.push(sphereDistanceConstraint);
@@ -138,10 +164,10 @@ class CLOTHSIM {
                                     if (angle == 0)
                                         firstQuadrant[0] = particle;
 
-                                    if(angle == 1.57)
+                                    if (angle == 1.57)
                                         firstQuadrant[3] = particle;
 
-                                    else
+                                    if (angle == 0.785)
                                         firstQuadrant[2] = particle;
                                 }
                                 if (quadrant == 2)
@@ -149,10 +175,10 @@ class CLOTHSIM {
                                     if (angle == 0)
                                         secondQuadrant[0] = particle;
                                             
-                                    if(angle == 1.57)
+                                    if (angle == 1.57)
                                         secondQuadrant[3] = particle;
                                     
-                                    else
+                                    if (angle == 0.785)
                                         secondQuadrant[2] = particle;
                                 }
 
@@ -186,9 +212,32 @@ class CLOTHSIM {
         );
 
         //Add rigid body sphere for collision
-        const rigidBody = new SphereBody(new THREE.Vector3(0, -30   , 0), 15, this.scene, this.collidableVisible);
+        const rigidBody = new SphereBody(new THREE.Vector3(0, 50, 0), 10, this.scene, this.collidableVisible);
         this.particleSystem.addRigidBody(rigidBody);
 
+        const rigidBody2 = new SphereBody(new THREE.Vector3(0, 60, 0), 10, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody2)
+
+        const rigidBody3 = new SphereBody(new THREE.Vector3(0, 70, 0), 10, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody3)
+
+        const rigidBody4 = new SphereBody(new THREE.Vector3(0, 80, 0), 10, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody4)
+
+        const rigidBody5 = new SphereBody(new THREE.Vector3(0, 90, 2.5), 10, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody5)        
+        
+        const rigidBody6 = new SphereBody(new THREE.Vector3(5, 90, 2.5), 10, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody6)
+
+        const rigidBody7 = new SphereBody(new THREE.Vector3(-5, 90, 2.5), 10, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody7)
+
+        const rigidBody8 = new SphereBody(new THREE.Vector3(5, 85, -2.5), 7.5, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody8)
+
+        const rigidBody9 = new SphereBody(new THREE.Vector3(-5, 85, -2.5), 7.5, this.scene, this.collidableVisible);
+        this.particleSystem.addRigidBody(rigidBody9)
         //Add rigid body box for collision
         // const rigidBody = new BoxBody(new THREE.Vector3(-20, -20, -10), new THREE.Vector3(20, -10, 10), this.scene);
         // this.particleSystem.addRigidBody(rigidBody);
@@ -250,6 +299,7 @@ class CLOTHSIM {
             }
 
             // this.updateVerticesFromParticles(this.geometry, this.particleSystem.particles);
+
         }
         this.renderer.render(this.scene, this.camera);
         
