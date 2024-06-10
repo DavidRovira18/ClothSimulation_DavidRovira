@@ -15,7 +15,7 @@ class CLOTHSIM {
         this.dt = 1/60;
         this.substeps = 3; 
         this.collidableVisible = false;
-        this.mode = 'DC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
+        this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
     }
     
     init() {
@@ -156,40 +156,8 @@ class CLOTHSIM {
             }
         );
 
-        //Add rigid body sphere for collision
-        const rigidBody = new SphereBody(new THREE.Vector3(0, 50, 0), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody);
-
-        const rigidBody2 = new SphereBody(new THREE.Vector3(0, 60, 0), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody2)
-
-        const rigidBody3 = new SphereBody(new THREE.Vector3(0, 70, 0), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody3)
-
-        const rigidBody4 = new SphereBody(new THREE.Vector3(0, 80, 0), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody4)
-
-        const rigidBody5 = new SphereBody(new THREE.Vector3(0, 90, 2.5), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody5)        
         
-        const rigidBody6 = new SphereBody(new THREE.Vector3(5, 90, 2.5), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody6)
-
-        const rigidBody7 = new SphereBody(new THREE.Vector3(-5, 90, 2.5), 10, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody7)
-
-        const rigidBody8 = new SphereBody(new THREE.Vector3(5, 85, -2.5), 7.5, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody8)
-
-        const rigidBody9 = new SphereBody(new THREE.Vector3(-5, 85, -2.5), 7.5, this.scene, this.collidableVisible);
-        this.particleSystem.addRigidBody(rigidBody9)
-        //Add rigid body box for collision
-        // const rigidBody = new BoxBody(new THREE.Vector3(-20, -20, -10), new THREE.Vector3(20, -10, 10), this.scene);
-        // this.particleSystem.addRigidBody(rigidBody);
-
-        //Add rigid body capsule for collision
-        // const rigidBody = new CapsuleBody(10, 10, new THREE.Vector3(0, -15, 0), this.scene, this.collidableVisible);
-        // this.particleSystem.addRigidBody(rigidBody);
+       this.addRigidBodies();
 
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
@@ -224,6 +192,22 @@ class CLOTHSIM {
                 this.toggle_simulation_btn.innerHTML = "Play Simulation"
             }
         });
+
+        this.mode_switch = document.getElementById('mode_switch');
+        this.mode_switch.addEventListener('change', (event) => {
+            this.mode = event.target.checked ? 'BC' : 'DC';
+            console.log(mode)
+            if (!this.simulationRunning)
+                return;
+                
+            this.particleSystem.linksDistanceConstraint.forEach((link) => {
+                link.update();
+            })
+
+            this.particleSystem.linksBendingConstraint.forEach((link) => {
+                link.update();
+            })
+        })
     }
 
     loop()
@@ -266,24 +250,21 @@ class CLOTHSIM {
             position.needsUpdate = true;
     }
 
-    getQuadrant(sphereCenter, point) //Determine in which quadrant is a point relative to a sphere center
+    addRigidBodies()
     {
-        const dx = point.x - sphereCenter.x;
-        const dz = point.z - sphereCenter.z;
+        const rigidBodies = [
+            new SphereBody(new THREE.Vector3(0, 50, 0), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(0, 60, 0), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(0, 70, 0), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(0, 80, 0), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(0, 90, 2.5), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(5, 90, 2.5), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(-5, 90, 2.5), 10, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(5, 85, -2.5), 7.5, this.scene, this.collidableVisible),
+            new SphereBody(new THREE.Vector3(-5, 85, -2.5), 7.5, this.scene, this.collidableVisible),
+        ];
 
-        //Only interested in quadrants where the particle is further away in z-axis respect to the sphere center (to avoid repeated links)
-        if(dz <= 0)
-        {
-            if(dx < 0) 
-                return 1; //First quadrant (left one)
-
-            if (dx > 0) 
-                return 2; //Second quadrant (right one)
-
-            if(dx == 0)
-                return -1 //Front direction
-        }
-        return;
+        rigidBodies.forEach(rigidBody => this.particleSystem.addRigidBody(rigidBody))
     }
 
     onMouseClick(event)
