@@ -116,7 +116,7 @@ class CLOTHSIM {
 
                 }
 
-                createLinks(spheresDistanceConstraint, spheresBendingConstraint)                 
+                this.createLinks(spheresDistanceConstraint, spheresBendingConstraint)                 
 
                 this.loop();
             },
