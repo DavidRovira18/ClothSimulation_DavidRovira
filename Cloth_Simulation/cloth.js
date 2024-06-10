@@ -16,6 +16,7 @@ class CLOTHSIM {
         this.substeps = 3; 
         this.collidableVisible = false;
         this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
+        this.simulationRunning = false;
     }
     
     init() {
@@ -114,35 +115,8 @@ class CLOTHSIM {
                     }
 
                 }
-                
-                //Create links between neighbor particles (Distance Constraint)
-                for (let i = 0; i < this.particleSystem.particles.length; ++i)
-                    for (let j = 0; j < spheresDistanceConstraint.length; ++j)
-                    {
-                        var particle = this.particleSystem.particles[i];
-                        var sphere = spheresDistanceConstraint[j];
 
-                        if(sphere.center.equals(particle.pos))
-                            continue;
-
-                        if(sphere.containsPoint(particle.pos))
-                            this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j], this.mode);
-                    }  
-
-                //Create links between neighbor particles (Distance Constraint + Bending Constraint)
-                for (let i = 0; i < this.particleSystem.particles.length; ++i)
-                    for (let j = 0; j < spheresBendingConstraint.length; ++j)
-                    {
-                        var particle = this.particleSystem.particles[i];
-                        var sphere = spheresBendingConstraint[j];
-
-                        if(sphere.center.equals(particle.pos))
-                            continue;
-
-                        if(sphere.containsPoint(particle.pos))
-                            this.particleSystem.addLinkBendingConstraint(particle, this.particleSystem.particles[j], this.mode);
-
-                    }  
+                createLinks(spheresDistanceConstraint, spheresBendingConstraint)                 
 
                 this.loop();
             },
@@ -168,9 +142,6 @@ class CLOTHSIM {
 
         //Delta time computation
         this.currentTime = performance.now();
-
-        //Interactivity parameters
-        this.simulationRunning = false;
 
         this.paused_text = document.getElementById("paused");
         this.running_text = document.getElementById("running");
@@ -233,6 +204,38 @@ class CLOTHSIM {
         this.renderer.render(this.scene, this.camera);
         
         requestAnimationFrame(this.loop.bind(this));
+    }
+
+    createLinks(spheresDistanceConstraint, spheresBendingConstraint)
+    {
+        //Create links between neighbor particles (Distance Constraint)
+        for (let i = 0; i < this.particleSystem.particles.length; ++i)
+            for (let j = 0; j < spheresDistanceConstraint.length; ++j)
+            {
+                var particle = this.particleSystem.particles[i];
+                var sphere = spheresDistanceConstraint[j];
+
+                if(sphere.center.equals(particle.pos))
+                    continue;
+
+                if(sphere.containsPoint(particle.pos))
+                    this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j], this.mode);
+            }  
+
+        //Create links between neighbor particles (Distance Constraint + Bending Constraint)
+        for (let i = 0; i < this.particleSystem.particles.length; ++i)
+            for (let j = 0; j < spheresBendingConstraint.length; ++j)
+            {
+                var particle = this.particleSystem.particles[i];
+                var sphere = spheresBendingConstraint[j];
+
+                if(sphere.center.equals(particle.pos))
+                    continue;
+
+                if(sphere.containsPoint(particle.pos))
+                    this.particleSystem.addLinkBendingConstraint(particle, this.particleSystem.particles[j], this.mode);
+
+            } 
     }
 
     updateVerticesFromParticles(geometry, particles)
