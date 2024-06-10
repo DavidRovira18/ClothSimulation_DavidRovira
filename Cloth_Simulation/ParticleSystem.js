@@ -66,17 +66,86 @@ export class Particle{
     }
 }
 
-export class LinkDistanceConstraint{
-    constructor(particle1, particle2, scene)
+class Link
+{
+    constructor(particle1, particle2, mode, scene)
     {
         this.particle1 = particle1;
         this.particle2 = particle2;
 
         this.r = particle1.pos.distanceTo(particle2.pos); //Resting length
+    }
+}
+
+export class LinkDistanceConstraint extends Link
+{
+    constructor(particle1, particle2, mode, scene)
+    {
+        super(particle1, particle2, mode, scene);
 
         //Spring mesh
         const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
         const springMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
+        this.springMesh = new Mesh(springGeometry, springMaterial);
+
+        springMaterial.transparent = true;
+        springMaterial.opacity = mode == 'DC' ? 1.0 : 0.0;
+
+        // Compute position
+        const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
+        this.springMesh.position.copy(midpoint);
+
+        // Compute rotation for the cylinder to align with the line between particles
+        const direction = new Vector3().copy(particle2.pos).sub(particle1.pos).normalize();
+        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
+        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
+        this.springMesh.quaternion.copy(quaternion);
+
+        scene.add(this.springMesh);
+    }
+
+    update(mode)
+    {
+        this.updateLinkMesh();
+
+        var opacity = this.springMesh.material.opacity;
+        
+        if (mode == 'BC' && opacity == 1.0)
+            {
+                this.springMesh.material.opacity = 0.0;
+            }
+        
+        if (mode == 'DC' && opacity == 0.0)
+            opacity = 1.0;
+    }
+
+    updateLinkMesh() 
+    {
+        // Compute position
+        const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
+        this.springMesh.position.copy(midpoint);
+
+        // Compute rotation
+        const direction = new Vector3().copy(this.particle2.pos).sub(this.particle1.pos).normalize();
+        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
+        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
+        this.springMesh.quaternion.copy(quaternion);
+    }
+}
+
+export class LinkBendingConstraint extends Link
+{
+    constructor(particle1, particle2, mode, scene)
+    {
+        super(particle1, particle2, mode, scene);
+
+        //Spring mesh
+        const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
+        const springMaterial = new MeshBasicMaterial({ color: 0xA020F0 });
+        
+        springMaterial.transparent = true;
+        springMaterial.opacity = mode == 'DC' ? 0.0 : 1.0;
+
         this.springMesh = new Mesh(springGeometry, springMaterial);
 
         // Compute position
@@ -92,54 +161,29 @@ export class LinkDistanceConstraint{
         scene.add(this.springMesh);
     }
 
-    updateLinkMesh() {
+    update(mode)
+    {
+        this.updateLinkMesh();
+
+        var opacity = this.springMesh.material.opacity;
+        
+        if (mode == 'DC' && opacity == 1.0)
+            {
+                this.springMesh.material.opacity = 0.0;
+            }
+        
+        if (mode == 'BC' && opacity == 0.0)
+            opacity = 1.0;
+    }
+
+    updateLinkMesh() 
+    {
         // Compute position
         const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
         this.springMesh.position.copy(midpoint);
 
         // Compute rotation
         const direction = new Vector3().copy(this.particle2.pos).sub(this.particle1.pos).normalize();
-        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
-        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
-        this.springMesh.quaternion.copy(quaternion);
-    }
-}
-
-export class LinkBendingConstraint{
-    constructor(particle1, particle2, particle3, particle4, scene)
-    {
-        this.particle1 = particle1;
-        this.particle2 = particle2;
-        this.particle3 = particle3;
-        this.particle4 = particle4;
-
-        this.r = particle2.pos.distanceTo(particle3.pos); //Resting length
-
-        //Spring mesh
-        const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
-        const springMaterial = new MeshBasicMaterial({ color: 0xA020F0 });
-        this.springMesh = new Mesh(springGeometry, springMaterial);
-
-        // Compute position
-        const midpoint = new Vector3().copy(this.particle2.pos).add(this.particle3.pos).multiplyScalar(0.5);
-        this.springMesh.position.copy(midpoint);
-
-        // Compute rotation for the cylinder to align with the line between particles
-        const direction = new Vector3().copy(particle3.pos).sub(particle2.pos).normalize();
-        const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
-        const quaternion = new Quaternion().setFromUnitVectors(up, direction);
-        this.springMesh.quaternion.copy(quaternion);
-
-        scene.add(this.springMesh)
-    }
-
-    updateLinkMesh() {
-        // Compute position
-        const midpoint = new Vector3().copy(this.particle2.pos).add(this.particle3.pos).multiplyScalar(0.5);
-        this.springMesh.position.copy(midpoint);
-
-        // Compute rotation
-        const direction = new Vector3().copy(this.particle2.pos).sub(this.particle3.pos).normalize();
         const up = new Vector3(0, 1, 0); // Assuming the cylinder is initially oriented along the y-axis
         const quaternion = new Quaternion().setFromUnitVectors(up, direction);
         this.springMesh.quaternion.copy(quaternion);
@@ -225,28 +269,32 @@ export class LinksSystem extends ParticleSystem{
         super(scene)
         this.linksDistanceConstraint = [];
         this.idLinksDistanceConstraint = [];
+        this.idLinksBendingConstraint = [];
         this.linksBendingConstraint = [];
         this.scene = scene;
     }
 
-    addLinkDistanceConstraint(particle1, particle2) //Create spring between particles
+    addLinkDistanceConstraint(particle1, particle2, mode) //Create spring between particles
     {
         // prevent repeated links
         if (this.idLinksDistanceConstraint.find((el) => {if (el[0] == particle1.id && el[1] == particle2.id) return true;}) || this.idLinksDistanceConstraint.find((el) => {if (el[0] == particle2.id && el[1] == particle1.id) return true;}))
             return;
 
         this.idLinksDistanceConstraint.push([particle1.id, particle2.id]);
-        this.linksDistanceConstraint.push(new LinkDistanceConstraint(particle1, particle2, this.scene));
+        this.linksDistanceConstraint.push(new LinkDistanceConstraint(particle1, particle2, mode, this.scene));
     }
 
-    addLinkBendingConstraint(particle1, particle2, particle3, particle4)
+    addLinkBendingConstraint(particle1, particle2, mode)
     {
-        //TO PREVENT REPEATED LINKS WE ARE ONLY TAKING THE FRONT HALF OF SPHERE
-        // this.idLinksDistanceConstraint.push([particle1.id, particle2.id]);
-        this.linksBendingConstraint.push(new LinkBendingConstraint(particle1, particle2, particle3, particle4, this.scene));
+        // prevent repeated links
+        if (this.idLinksBendingConstraint.find((el) => {if (el[0] == particle1.id && el[1] == particle2.id) return true;}) || this.idLinksBendingConstraint.find((el) => {if (el[0] == particle2.id && el[1] == particle1.id) return true;}))
+            return;
+
+        this.idLinksBendingConstraint.push([particle1.id, particle2.id]);
+        this.linksBendingConstraint.push(new LinkBendingConstraint(particle1, particle2, mode, this.scene));
     }
 
-    update(dt, substeps) {
+    update(dt, substeps, mode) {
         
         // XPBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
         
@@ -262,18 +310,19 @@ export class LinksSystem extends ParticleSystem{
                 SemiImplicitEulerIntegrator(particle, ts); // Compute predicted position
             });
 
-            this.linksDistanceConstraint.forEach((link) => {
-                solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.001, ts); // Solve distance constraints
-            });
+            if (mode == 'DC')
+            {
+                this.linksDistanceConstraint.forEach((link) => {
+                    solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.001, ts); // Solve distance constraints
+                });
+            }
 
-            //Fastest and easiest implementation of bending constraint using distance constraint
-            this.linksBendingConstraint.forEach((link) => {
-                solveDistanceConstraint(link.particle2, link.particle3, link.r, 0.001, ts); // Solve bending constraints
-            });
-
-            // this.linksBendingConstraint.forEach((link) => {
-            //     solveBendingConstraint(link.particle1, link.particle2, link.particle3, link.particle4, 0.01, ts); // Solve bending constraints
-            // });
+            if (mode == 'BC')
+            {
+                this.linksBendingConstraint.forEach((link) => {
+                    solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.001, ts); // Solve bending constraints
+                });
+            }
 
             this.resolveCols();            
 
@@ -293,7 +342,7 @@ export class LinksSystem extends ParticleSystem{
         })        
         
         this.linksBendingConstraint.forEach((link) => {
-            link.updateLinkMesh();
+            link.update(mode);
         })
     }
 }

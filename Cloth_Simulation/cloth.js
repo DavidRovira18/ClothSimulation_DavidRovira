@@ -15,6 +15,7 @@ class CLOTHSIM {
         this.dt = 1/60;
         this.substeps = 3; 
         this.collidableVisible = false;
+        this.mode = 'DC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
     }
     
     init() {
@@ -89,7 +90,7 @@ class CLOTHSIM {
 
                 // Define neighborhood radius for links
                 const neighborhoodRadiusDistanceConstraint = 2;
-                const neighborhoodRadiusBendingConstraint = 6;
+                const neighborhoodRadiusBendingConstraint = 3;
 
                 // Create spheres representing neighborhoods around each vertex
                 const spheresDistanceConstraint = [];
@@ -125,79 +126,23 @@ class CLOTHSIM {
                             continue;
 
                         if(sphere.containsPoint(particle.pos))
-                            this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j]);
-
+                            this.particleSystem.addLinkDistanceConstraint(particle, this.particleSystem.particles[j], this.mode);
                     }  
 
-                //Create links between neighbor particles (Bending Constraint)
-                for (let i = 0; i < spheresBendingConstraint.length; ++i)
-                {
-                    const firstQuadrant = [null, null, null, null];
-                    const secondQuadrant = [null, null, null, null];
-
-                    var sphere = spheresBendingConstraint[i];
-
-                    for (let j = 0; j < this.particleSystem.particles.length; ++j)
+                //Create links between neighbor particles (Distance Constraint + Bending Constraint)
+                for (let i = 0; i < this.particleSystem.particles.length; ++i)
+                    for (let j = 0; j < spheresBendingConstraint.length; ++j)
                     {
-                        var particle = this.particleSystem.particles[j];
+                        var particle = this.particleSystem.particles[i];
+                        var sphere = spheresBendingConstraint[j];
+
+                        if(sphere.center.equals(particle.pos))
+                            continue;
 
                         if(sphere.containsPoint(particle.pos))
-                        {
-                            var quadrant = this.getQuadrant(sphere.center, particle.pos); //Get quadrant to classify particles in first or second quadrant
+                            this.particleSystem.addLinkBendingConstraint(particle, this.particleSystem.particles[j], this.mode);
 
-                            if(sphere.center.equals(particle.pos))
-                            {
-                                firstQuadrant[1] = particle;
-                                secondQuadrant[1] = particle;
-                                continue;
-                            }
-
-                            if (quadrant)
-                            {
-                                const referenceVector = new THREE.Vector3(0,0,-1);
-                                var dirVector = particle.pos.clone().sub(sphere.center);
-                                var angle = referenceVector.angleTo(dirVector).toPrecision(3);
-
-                                if (quadrant == 1)
-                                {
-                                    
-                                    if (angle == 0)
-                                        firstQuadrant[0] = particle;
-
-                                    if (angle == 1.57)
-                                        firstQuadrant[3] = particle;
-
-                                    if (angle == 0.785)
-                                        firstQuadrant[2] = particle;
-                                }
-                                if (quadrant == 2)
-                                {
-                                    if (angle == 0)
-                                        secondQuadrant[0] = particle;
-                                            
-                                    if (angle == 1.57)
-                                        secondQuadrant[3] = particle;
-                                    
-                                    if (angle == 0.785)
-                                        secondQuadrant[2] = particle;
-                                }
-
-                                if (quadrant == -1) 
-                                {
-                                    firstQuadrant[0] = particle;
-                                    secondQuadrant[0] = particle;
-                                }
-                            } 
-                        }
-                    }
-
-                    if (!firstQuadrant.includes(null))
-                            this.particleSystem.addLinkBendingConstraint(firstQuadrant[0], firstQuadrant[1], firstQuadrant[2], firstQuadrant[3]);
-                    
-                    if (!secondQuadrant.includes(null))
-                            this.particleSystem.addLinkBendingConstraint(secondQuadrant[0], secondQuadrant[1], secondQuadrant[2], secondQuadrant[3])
-                        
-                }
+                    }  
 
                 this.loop();
             },
@@ -294,7 +239,7 @@ class CLOTHSIM {
             while(frameTime > 0.0)
             {
                 var deltaTime = Math.min(frameTime, this.dt);
-                this.particleSystem.update(deltaTime, this.substeps);
+                this.particleSystem.update(deltaTime, this.substeps, this.mode);
                 frameTime -= deltaTime;
             }
 
