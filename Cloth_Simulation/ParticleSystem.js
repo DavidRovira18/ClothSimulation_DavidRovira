@@ -296,7 +296,7 @@ export class LinksSystem extends ParticleSystem{
 
     update(dt, substeps, mode) {
         
-        // XPBD Simple Loop (Distance Constraint Only, Simulating a Mass Spring System)
+        // XPBD Loop
         
         var ts = dt / substeps;
 
