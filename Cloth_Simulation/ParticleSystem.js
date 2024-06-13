@@ -294,20 +294,26 @@ export class LinksSystem extends ParticleSystem{
         this.linksBendingConstraint.push(new LinkBendingConstraint(particle1, particle2, mode, this.scene));
     }
 
-    update(dt, substeps, mode) {
+    update(dt, substeps, mode, gravityForce, applyWind, windForce, windDirection) {
         
         // XPBD Loop
-        
         var ts = dt / substeps;
 
         this.detectCols(); //Detect collisions
 
         for (let i = 0; i < substeps; ++i) {
             this.particles.forEach((particle) => {
+
                 particle.clearForce();
-                particle.applyForce(new Vector3(0, -9.8, 0)); // Add gravity force
+                particle.applyForce(new Vector3(0, gravityForce, 0)); // Add gravity force
+
+                if(applyWind)
+                    particle.applyForce(windDirection.clone().multiplyScalar(windForce));
+                
+
                 particle.prevPos.copy(particle.pos); // Store previous position
                 SemiImplicitEulerIntegrator(particle, ts); // Compute predicted position
+                
             });
 
             if (mode == 'DC')

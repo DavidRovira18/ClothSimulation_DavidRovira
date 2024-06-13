@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { Particle, ParticleSystem, LinksSystem } from './ParticleSystem.js';
 import { BoxBody, SphereBody } from './RigidBody.js';
 
@@ -17,6 +18,12 @@ class CLOTHSIM {
         this.collidableVisible = false;
         this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
         this.simulationRunning = false;
+
+        //Simulation Parameters Interactivity
+        this.gravityForce = -9.8;
+        this.applyWind = true;
+        this.windForce = 1;
+        this.windDirection = new THREE.Vector3(1,0,0);
     }
     
     init() {
@@ -133,6 +140,8 @@ class CLOTHSIM {
         
        this.addRigidBodies();
 
+       this.addGUI();
+
         // Variables for user interaction
         this.mouse = new THREE.Vector2();
         this.raycaster = new THREE.Raycaster();
@@ -194,7 +203,7 @@ class CLOTHSIM {
             while(frameTime > 0.0)
             {
                 var deltaTime = Math.min(frameTime, this.dt);
-                this.particleSystem.update(deltaTime, this.substeps, this.mode);
+                this.particleSystem.update(deltaTime, this.substeps, this.mode, this.gravityForce, this.applyWind, this.windForce, this.windDirection);
                 frameTime -= deltaTime;
             }
 
@@ -268,6 +277,47 @@ class CLOTHSIM {
         ];
 
         rigidBodies.forEach(rigidBody => this.particleSystem.addRigidBody(rigidBody))
+    }
+
+    addGUI()
+    {
+        const gui = new GUI();
+
+        //External Forces GUI
+        const externalForcesObject = {
+            gravityForce: -9.8,
+            applyWind: false,
+            windForce: 1,
+            windDirection: new THREE.Vector3(1,0,0)
+        };
+    
+        const externalForces = gui.addFolder('External Forces')
+
+        externalForces.add(externalForcesObject, 'gravityForce', -20, 20, 0.5).onChange(() => {
+            this.gravityForce = externalForcesObject.gravityForce;
+        })
+
+        externalForces.add(externalForcesObject, 'applyWind').onChange(() => {
+            this.applyWind = externalForcesObject.applyWind;
+        })
+
+        externalForces.add(externalForcesObject, 'windForce', 0, 20, 0.5).onChange(() => {
+            this.windForce = externalForcesObject.windForce;
+        })
+
+        const windDirectionFolder = externalForces.addFolder('Wind Direction');
+        
+        
+        windDirectionFolder.add(externalForcesObject.windDirection, 'x', -1, 1, 0.1).onChange(() => {
+            this.windDirection.x = externalForcesObject.windDirection.x;
+        });
+        windDirectionFolder.add(externalForcesObject.windDirection, 'y',-1, 1, 0.1).onChange(() => {
+            this.windDirection.y = externalForcesObject.windDirection.y;
+        });;
+        windDirectionFolder.add(externalForcesObject.windDirection, 'z',-1, 1, 0.1).onChange(() => {
+            this.windDirection.z = externalForcesObject.windDirection.z;
+        });;
+
     }
 
     onMouseClick(event)
