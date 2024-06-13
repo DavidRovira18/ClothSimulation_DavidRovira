@@ -14,9 +14,7 @@ class CLOTHSIM {
         this.renderer = null;
         this.clothMass = 1;
         this.dt = 1/60;
-        this.substeps = 3; 
         this.collidableVisible = false;
-        this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
         this.simulationRunning = false;
 
         //Simulation Parameters Interactivity
@@ -24,7 +22,11 @@ class CLOTHSIM {
         this.applyWind = true;
         this.windForce = 1;
         this.windDirection = new THREE.Vector3(1,0,0);
-    }
+
+        this.stiffness = 0.001;
+        this.substeps = 3; 
+        this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
+    }   
     
     init() {
         //Set up scene
@@ -203,7 +205,7 @@ class CLOTHSIM {
             while(frameTime > 0.0)
             {
                 var deltaTime = Math.min(frameTime, this.dt);
-                this.particleSystem.update(deltaTime, this.substeps, this.mode, this.gravityForce, this.applyWind, this.windForce, this.windDirection);
+                this.particleSystem.update(deltaTime, this.substeps, this.stiffness, this.mode, this.gravityForce, this.applyWind, this.windForce, this.windDirection);
                 frameTime -= deltaTime;
             }
 
@@ -285,15 +287,15 @@ class CLOTHSIM {
 
         //External Forces GUI
         const externalForcesObject = {
-            gravityForce: -9.8,
-            applyWind: false,
-            windForce: 1,
-            windDirection: new THREE.Vector3(1,0,0)
+            gravityForce: this.gravityForce,
+            applyWind: this.applyWind,
+            windForce: this.windForce,
+            windDirection: this.windDirection
         };
     
         const externalForces = gui.addFolder('External Forces')
 
-        externalForces.add(externalForcesObject, 'gravityForce', -20, 20, 0.5).onChange(() => {
+        externalForces.add(externalForcesObject, 'gravityForce', -30, 0, 0.5).onChange(() => {
             this.gravityForce = externalForcesObject.gravityForce;
         })
 
@@ -318,6 +320,20 @@ class CLOTHSIM {
             this.windDirection.z = externalForcesObject.windDirection.z;
         });;
 
+        //Simulations Parameters GUI
+        const simulationParametersObject = {
+            substeps: this.substeps,
+            stiffness: 1
+        }
+
+        const simulationParametersFolder = gui.addFolder('Simulation Parameters');
+        simulationParametersFolder.add(simulationParametersObject, 'substeps', 1, 10, 1).onChange(() => {
+            this.substeps = simulationParametersObject.substeps;
+        })
+
+        simulationParametersFolder.add(simulationParametersObject, 'stiffness', 1, 10, 1).onChange(() => {
+            this.stifness = simulationParametersObject.stiffness * 0.01;
+        })
     }
 
     onMouseClick(event)

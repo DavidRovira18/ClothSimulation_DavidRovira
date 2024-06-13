@@ -294,7 +294,7 @@ export class LinksSystem extends ParticleSystem{
         this.linksBendingConstraint.push(new LinkBendingConstraint(particle1, particle2, mode, this.scene));
     }
 
-    update(dt, substeps, mode, gravityForce, applyWind, windForce, windDirection) {
+    update(dt, substeps, stiffness, mode, gravityForce, applyWind, windForce, windDirection) {
         
         // XPBD Loop
         var ts = dt / substeps;
@@ -319,14 +319,14 @@ export class LinksSystem extends ParticleSystem{
             if (mode == 'DC')
             {
                 this.linksDistanceConstraint.forEach((link) => {
-                    solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.001, ts); // Solve distance constraints
+                    solveDistanceConstraint(link.particle1, link.particle2, link.r, stiffness, ts); // Solve distance constraints
                 });
             }
 
             if (mode == 'BC')
             {
                 this.linksBendingConstraint.forEach((link) => {
-                    solveDistanceConstraint(link.particle1, link.particle2, link.r, 0.001, ts); // Solve bending constraints
+                    solveDistanceConstraint(link.particle1, link.particle2, link.r, stiffness, ts); // Solve bending constraints
                 });
             }
 
