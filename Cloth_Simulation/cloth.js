@@ -174,22 +174,6 @@ class CLOTHSIM {
                 this.toggle_simulation_btn.innerHTML = "Play Simulation"
             }
         });
-
-        this.mode_switch = document.getElementById('mode_switch');
-        this.mode_switch.addEventListener('change', (event) => {
-            this.mode = event.target.checked ? 'BC' : 'DC';
-            console.log(mode)
-            if (!this.simulationRunning)
-                return;
-                
-            this.particleSystem.linksDistanceConstraint.forEach((link) => {
-                link.update();
-            })
-
-            this.particleSystem.linksBendingConstraint.forEach((link) => {
-                link.update();
-            })
-        })
     }
 
     loop()
@@ -323,7 +307,8 @@ class CLOTHSIM {
         //Simulations Parameters GUI
         const simulationParametersObject = {
             substeps: this.substeps,
-            stiffness: 1
+            stiffness: 1,
+            activeConstraint: this.mode
         }
 
         const simulationParametersFolder = gui.addFolder('Simulation Parameters');
@@ -333,6 +318,32 @@ class CLOTHSIM {
 
         simulationParametersFolder.add(simulationParametersObject, 'stiffness', 1, 10, 1).onChange(() => {
             this.stifness = simulationParametersObject.stiffness * 0.01;
+        })
+
+        simulationParametersFolder.add(simulationParametersObject, 'activeConstraint', {AllConstraints: 'BC', DistanceConstraint: 'DC'} ).onChange(() => {
+            this.mode = simulationParametersObject.activeConstraint;
+        })
+
+        simulationParametersFolder.add({ resetSimulation: this.resetSimulation.bind(this) }, 'resetSimulation').name('Reset Simulation');
+    }
+
+    resetSimulation()
+    {
+        this.simulationRunning = false;
+        this.paused_text.className = "visible";
+        this.running_text.className = "hidden";
+        this.toggle_simulation_btn.innerHTML = "Play Simulation";
+
+        this.particleSystem.particles.forEach((particle) => {
+            particle.resetParticle();
+        })
+
+        this.particleSystem.linksBendingConstraint.forEach((link) => {
+            link.updateLinkMesh();
+        })
+
+        this.particleSystem.linksDistanceConstraint.forEach((link) => {
+            link.updateLinkMesh();
         })
     }
 

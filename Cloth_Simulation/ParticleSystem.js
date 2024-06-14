@@ -1,7 +1,7 @@
 //3D particle system implementation
 import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
-import { solveBendingConstraint, solveDistanceConstraint } from "./constraints.js";
+import { solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
 import { detectCollisions, resolveCollisions } from "./collisions.js";
 
@@ -15,6 +15,7 @@ export class Particle{
         this.mass = mass;
         this.initMass = mass;
         this.pos = pos;
+        this.initPos = pos.clone();
         this.vel = new Vector3(0,0,0);
         this.f = new Vector3(0,0,0);
 
@@ -60,9 +61,20 @@ export class Particle{
         //Euler integrator
         SemiImplicitEulerIntegrator(this, dt);
 
-        //Update mesh and BoundingBox position
+        //Update mesh
         this.mesh.position.copy(this.pos);
-        this.BB.center.copy(this.pos);
+    }
+
+    resetParticle()
+    {
+        this.mass = this.initMass;
+        this.w = 1/this.mass;
+        this.pos = this.initPos;
+        this.vel = new Vector3(0,0,0);
+        this.clearForce();
+        this.prevPos = new Vector3(0,0,0);
+        this.attached = false;
+        this.mesh.position.copy(this.pos);
     }
 }
 

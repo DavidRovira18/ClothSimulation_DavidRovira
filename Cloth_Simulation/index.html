@@ -13,59 +13,81 @@
             }
         }
     </script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            overflow: hidden; /* Prevent scrolling */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Ensure the body takes up the full height of the viewport */
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Ensure canvas is behind the text */
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Ensure text is on top */
+            pointer-events: none; /* Allow clicks to pass through */
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for a floating effect */
+        }
+
+        .header h {
+            margin: 0 10px;
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+            pointer-events: auto; /* Enable pointer events for these elements */
+        }
+
+        .toggle_simulation {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            pointer-events: auto; /* Enable pointer events for these elements */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for button */
+        }
+
+        .toggle_simulation:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
-<style>
-    body{
-        margin:0;
-    }
-
-    canvas {
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0; /* Ensure canvas is behind the text */
-    }
-
-    .visible, .hidden {
-        position: absolute;
-        top: 10px; /* Adjust as needed */
-        left: 10px; /* Adjust as needed */
-        z-index: 100; /* Ensure text is on top */
-        color: green;
-        font-size: 24px;
-        font-weight: bold;
-    }
-
-    .toggle_simulation, .toggle_mode {
-        position: absolute;
-        top: 10px;
-        z-index: 100;
-    }
-
-    .toggle_simulation {
-        left: 20%;
-    }
-
-    .toggle_mode {
-        left: 35%;
-    }
-
-    .hidden {
-        display: none;
-    }
-</style>
 <body>
-
-    <h class="visible" id="paused">Simulation Paused!</h>
-    <h class="hidden" id="running">Simulation Running!</h>
-    <button class="toggle_simulation">Play Simulation</button>
-    <label class="toggle_mode">
-        <input type="checkbox" id="mode_switch">
-        Toggle Mode (DC / BC)
-    </label>
+    <div class="header">
+        <h class="visible" id="paused">Simulation Paused!</h>
+        <h class="hidden" id="running">Simulation Running!</h>
+        <button class="toggle_simulation">Play Simulation</button>
+    </div>
 
     <script type="module" src="constraints.js"></script>
     <script type="module" src="integrators.js"></script>
