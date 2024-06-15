@@ -1,12 +1,12 @@
 //3D particle system implementation
-import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere } from "three";
+import { Vector3, Quaternion, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Mesh, Sphere, DoubleSide, Object3D } from "three";
 import { EulerIntegrator, SemiImplicitEulerIntegrator } from '../3D_Particle_System/integrators.js';
 import { solveDistanceConstraint } from "./constraints.js";
 import { RigidBody } from "./RigidBody.js";
 import { detectCollisions, resolveCollisions } from "./collisions.js";
 
 export class Particle{
-    constructor(id, mass, pos, index, scene)
+    constructor(id, mass, pos, index, objectgroup)
     {
         if (! (pos instanceof Vector3))
             console.error("Position is not a Vector3")
@@ -25,10 +25,10 @@ export class Particle{
 
         this.attached = false;
 
-        this.geometry = new SphereGeometry(0.3, 32, 32);
+        this.geometry = new SphereGeometry(0.008, 32, 32);
         this.material = new MeshBasicMaterial({ color: 0xff0000 });
         this.mesh = new Mesh(this.geometry, this.material);
-        scene.add(this.mesh);
+        objectgroup.add(this.mesh);
 
         this.vertexIndex = index;
 
@@ -75,12 +75,13 @@ export class Particle{
         this.prevPos = new Vector3(0,0,0);
         this.attached = false;
         this.mesh.position.copy(this.pos);
+        this.mesh.material.color.set(0xff000);
     }
 }
 
 class Link
 {
-    constructor(particle1, particle2, mode, scene)
+    constructor(particle1, particle2, mode, objectgroup)
     {
         this.particle1 = particle1;
         this.particle2 = particle2;
@@ -91,14 +92,15 @@ class Link
 
 export class LinkDistanceConstraint extends Link
 {
-    constructor(particle1, particle2, mode, scene)
+    constructor(particle1, particle2, mode, objectgroup)
     {
-        super(particle1, particle2, mode, scene);
+        super(particle1, particle2, mode, objectgroup);
 
         //Spring mesh
-        const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
-        const springMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
+        const springGeometry = new CylinderGeometry(0.001, 0.001, this.r, 4);
+        const springMaterial = new MeshBasicMaterial({ color: 0x00ff00, side: DoubleSide });
         this.springMesh = new Mesh(springGeometry, springMaterial);
+        this.springMesh.frustumCulled = false;
 
         springMaterial.transparent = true;
         springMaterial.opacity = mode == 'DC' ? 1.0 : 0.0;
@@ -113,7 +115,7 @@ export class LinkDistanceConstraint extends Link
         const quaternion = new Quaternion().setFromUnitVectors(up, direction);
         this.springMesh.quaternion.copy(quaternion);
 
-        scene.add(this.springMesh);
+        objectgroup.add(this.springMesh);
     }
 
     update(mode)
@@ -147,18 +149,19 @@ export class LinkDistanceConstraint extends Link
 
 export class LinkBendingConstraint extends Link
 {
-    constructor(particle1, particle2, mode, scene)
+    constructor(particle1, particle2, mode, objectgroup)
     {
-        super(particle1, particle2, mode, scene);
+        super(particle1, particle2, mode, objectgroup);
 
         //Spring mesh
-        const springGeometry = new CylinderGeometry(0.05, 0.05, this.r, 8);
-        const springMaterial = new MeshBasicMaterial({ color: 0xA020F0 });
+        const springGeometry = new CylinderGeometry(0.001, 0.001, this.r, 4);
+        const springMaterial = new MeshBasicMaterial({ color: 0xA020F0, side: DoubleSide });
         
-        springMaterial.transparent = true;
+        // springMaterial.transparent = true;
         springMaterial.opacity = mode == 'DC' ? 0.0 : 1.0;
 
         this.springMesh = new Mesh(springGeometry, springMaterial);
+        this.springMesh.frustumCulled = false;
 
         // Compute position
         const midpoint = new Vector3().copy(this.particle1.pos).add(this.particle2.pos).multiplyScalar(0.5);
@@ -170,7 +173,8 @@ export class LinkBendingConstraint extends Link
         const quaternion = new Quaternion().setFromUnitVectors(up, direction);
         this.springMesh.quaternion.copy(quaternion);
 
-        scene.add(this.springMesh);
+        //scene.add(this.springMesh);
+        objectgroup.add(this.springMesh);
     }
 
     update(mode)
@@ -210,12 +214,14 @@ export class ParticleSystem{
         this.rigidBodies = [];
         this.idCount = 0;
 
+        this.objectgroup = new Object3D();
         this.scene = scene;
+        this.scene.add(this.objectgroup)
     }
 
     createParticle(mass, pos, index)
     {
-        this.particles.push(new Particle(this.idCount, mass, pos, index, this.scene));
+        this.particles.push(new Particle(this.idCount, mass, pos, index, this.objectgroup));
         this.idCount++
     }
 
@@ -293,7 +299,7 @@ export class LinksSystem extends ParticleSystem{
             return;
 
         this.idLinksDistanceConstraint.push([particle1.id, particle2.id]);
-        this.linksDistanceConstraint.push(new LinkDistanceConstraint(particle1, particle2, mode, this.scene));
+        this.linksDistanceConstraint.push(new LinkDistanceConstraint(particle1, particle2, mode, this.objectgroup));
     }
 
     addLinkBendingConstraint(particle1, particle2, mode)
@@ -303,7 +309,7 @@ export class LinksSystem extends ParticleSystem{
             return;
 
         this.idLinksBendingConstraint.push([particle1.id, particle2.id]);
-        this.linksBendingConstraint.push(new LinkBendingConstraint(particle1, particle2, mode, this.scene));
+        this.linksBendingConstraint.push(new LinkBendingConstraint(particle1, particle2, mode, this.objectgroup));
     }
 
     update(dt, substeps, stiffness, mode, gravityForce, applyWind, windForce, windDirection) {
@@ -315,12 +321,15 @@ export class LinksSystem extends ParticleSystem{
 
         for (let i = 0; i < substeps; ++i) {
             this.particles.forEach((particle) => {
-
+                
+                if(particle.attached)
+                    return;
+                    
                 particle.clearForce();
-                particle.applyForce(new Vector3(0, gravityForce, 0)); // Add gravity force
+                particle.applyForce(new Vector3(0, gravityForce * particle.mass * 0.1, 0)); // Add gravity force
 
                 if(applyWind)
-                    particle.applyForce(windDirection.clone().multiplyScalar(windForce));
+                    particle.applyForce(windDirection.clone().multiplyScalar(windForce * 0.1));
                 
 
                 particle.prevPos.copy(particle.pos); // Store previous position

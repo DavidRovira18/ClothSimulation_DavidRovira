@@ -1,21 +1,14 @@
 import { Vector3, BoxGeometry, SphereGeometry, CapsuleGeometry, Mesh, MeshBasicMaterial } from "three";
 
 export class RigidBody{
-    constructor(scene, visible)
+    constructor()
     {
-        this.scene = scene;
-        this.visible = visible;
         this.mesh = undefined;
-    }
-
-    toogleVisibility()
-    {
-        this.mesh.visible = this.visible;
     }
 }
 
 export class BoxBody extends RigidBody{
-    constructor(min, max, scene, visible)
+    constructor(min, max, objectgroup)
     {
         super(scene, visible);
         this.min = min;
@@ -27,16 +20,14 @@ export class BoxBody extends RigidBody{
         this.mesh = new Mesh(this.geometry, this.material);
         
         this.mesh.position.copy(this.center);
-        this.scene.add(this.mesh);
-
-        this.toogleVisibility();
+        objectgroup.add(this.mesh);
     }
 }
 
 export class SphereBody extends RigidBody{
-    constructor(center, radius, scene, visible)
+    constructor(center, radius, objectgroup)
     {
-        super(scene, visible);
+        super();
         this.center = center;
         this.radius = radius;
 
@@ -45,8 +36,6 @@ export class SphereBody extends RigidBody{
         this.mesh = new Mesh(this.geometry, this.material);
 
         this.mesh.position.copy(this.center);
-        this.scene.add(this.mesh);
-
-        this.toogleVisibility();
+        objectgroup.add(this.mesh);
     }
 }
