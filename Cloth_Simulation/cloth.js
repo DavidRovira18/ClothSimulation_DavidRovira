@@ -99,7 +99,7 @@ class CLOTHSIM {
                 if (object.children[0] instanceof THREE.Mesh)
                     object.children[0].material.side = THREE.DoubleSide;
 
-                object.position.set(0,1.40,-0.4);
+                object.position.set(0,1.40,-0.32);
                 object.updateMatrixWorld();
                 
                 this.scene.add( object );
@@ -120,8 +120,8 @@ class CLOTHSIM {
                 }
 
                 // Define neighborhood radius for links
-                const neighborhoodRadiusDistanceConstraint = 0.04;
-                const neighborhoodRadiusBendingConstraint = 0.06;
+                const neighborhoodRadiusDistanceConstraint = 0.03;
+                const neighborhoodRadiusBendingConstraint = 0.04;
 
                 // Create spheres representing neighborhoods around each vertex
                 const spheresDistanceConstraint = [];
@@ -343,8 +343,8 @@ class CLOTHSIM {
             this.substeps = simulationParametersObject.substeps;
         })
 
-        simulationParametersFolder.add(simulationParametersObject, 'stiffness', 0.0001, 0.1).onChange(() => {
-            this.stifness = simulationParametersObject.stiffness;
+        simulationParametersFolder.add(simulationParametersObject, 'stiffness', 0.0001, 0.01).onChange(() => {
+            this.stiffness = simulationParametersObject.stiffness;
         })
 
         simulationParametersFolder.add(simulationParametersObject, 'activeConstraint', {AllConstraints: 'BC', DistanceConstraint: 'DC'} ).onChange(() => {

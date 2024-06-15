@@ -25,7 +25,7 @@ export class Particle{
 
         this.attached = false;
 
-        this.geometry = new SphereGeometry(0.008, 32, 32);
+        this.geometry = new SphereGeometry(0.005, 32, 32);
         this.material = new MeshBasicMaterial({ color: 0xff0000 });
         this.mesh = new Mesh(this.geometry, this.material);
         objectgroup.add(this.mesh);
@@ -324,7 +324,7 @@ export class LinksSystem extends ParticleSystem{
                 
                 if(particle.attached)
                     return;
-                    
+
                 particle.clearForce();
                 particle.applyForce(new Vector3(0, gravityForce * particle.mass * 0.1, 0)); // Add gravity force
 
