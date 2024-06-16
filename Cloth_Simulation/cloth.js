@@ -93,7 +93,7 @@ class CLOTHSIM {
         this.loader.setPath('./models/');
         this.loader.load(
             // resource URL
-            'cape_small.obj',
+            'cape_small_morevertices.obj',
             // called when resource is loaded
             ( object ) => {
                 if (object.children[0] instanceof THREE.Mesh)
@@ -120,8 +120,8 @@ class CLOTHSIM {
                 }
 
                 // Define neighborhood radius for links
-                const neighborhoodRadiusDistanceConstraint = 0.03;
-                const neighborhoodRadiusBendingConstraint = 0.04;
+                const neighborhoodRadiusDistanceConstraint = 0;
+                const neighborhoodRadiusBendingConstraint = 0.02;
 
                 // Create spheres representing neighborhoods around each vertex
                 const spheresDistanceConstraint = [];
