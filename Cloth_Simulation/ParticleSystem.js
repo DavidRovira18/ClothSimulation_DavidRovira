@@ -118,19 +118,15 @@ export class LinkDistanceConstraint extends Link
         objectgroup.add(this.springMesh);
     }
 
-    update(mode)
-    {
-        this.updateLinkMesh();
+    update(mode) {
+        this.updateLinkMesh(); // Update mesh position and rotation
 
-        var opacity = this.springMesh.material.opacity;
-        
-        if (mode == 'BC' && opacity == 1.0)
-            {
-                this.springMesh.material.opacity = 0.0;
-            }
-        
-        if (mode == 'DC' && opacity == 0.0)
-            opacity = 1.0;
+        // Update opacity based on mode
+        if (mode === 'BC') {
+            this.springMesh.material.opacity = 0.0; // Make the link transparent
+        } else if (mode === 'DC') {
+            this.springMesh.material.opacity = 1.0; // Make the link opaque
+        }
     }
 
     updateLinkMesh() 
@@ -177,19 +173,15 @@ export class LinkBendingConstraint extends Link
         objectgroup.add(this.springMesh);
     }
 
-    update(mode)
-    {
-        this.updateLinkMesh();
+    update(mode) {
+        this.updateLinkMesh(); // Update mesh position and rotation
 
-        var opacity = this.springMesh.material.opacity;
-        
-        if (mode == 'DC' && opacity == 1.0)
-            {
-                this.springMesh.material.opacity = 0.0;
-            }
-        
-        if (mode == 'BC' && opacity == 0.0)
-            opacity = 1.0;
+        // Update opacity based on mode
+        if (mode === 'DC') {
+            this.springMesh.material.opacity = 0.0; // Make the link transparent
+        } else if (mode === 'BC') {
+            this.springMesh.material.opacity = 1.0; // Make the link opaque
+        }
     }
 
     updateLinkMesh() 

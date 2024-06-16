@@ -27,7 +27,7 @@ class CLOTHSIM {
 
         this.stiffness = 0.001;
         this.substeps = 3; 
-        this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
+        this.mode = 'DC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
 
         this.renderHelpers = true;
     }   
@@ -93,7 +93,7 @@ class CLOTHSIM {
         this.loader.setPath('./models/');
         this.loader.load(
             // resource URL
-            'cape_small_morevertices.obj',
+            'cape_small.obj',
             // called when resource is loaded
             ( object ) => {
                 if (object.children[0] instanceof THREE.Mesh)
@@ -122,8 +122,8 @@ class CLOTHSIM {
                 }
 
                 // Define neighborhood radius for links
-                const neighborhoodRadiusDistanceConstraint = 0;
-                const neighborhoodRadiusBendingConstraint = 0.02;
+                const neighborhoodRadiusDistanceConstraint = 0.03;
+                const neighborhoodRadiusBendingConstraint = 0.04;
 
                 // Create spheres representing neighborhoods around each vertex
                 const spheresDistanceConstraint = [];
@@ -352,6 +352,13 @@ class CLOTHSIM {
 
         simulationParametersFolder.add(simulationParametersObject, 'activeConstraint', {AllConstraints: 'BC', DistanceConstraint: 'DC'} ).onChange(() => {
             this.mode = simulationParametersObject.activeConstraint;
+            this.particleSystem.linksBendingConstraint.forEach((link) =>{
+                link.update();
+            })
+
+            this.particleSystem.linksDistanceConstraint.forEach((link) =>{
+                link.update();
+            })
         })
 
         simulationParametersFolder.add({ resetSimulation: this.resetSimulation.bind(this) }, 'resetSimulation').name('Reset Simulation');
