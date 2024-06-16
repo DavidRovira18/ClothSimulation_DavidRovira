@@ -75,7 +75,7 @@ export class Particle{
         this.prevPos = new Vector3(0,0,0);
         this.attached = false;
         this.mesh.position.copy(this.pos);
-        this.mesh.material.color.set(0xff000);
+        this.mesh.material.color.set(0xff0000);
     }
 }
 
