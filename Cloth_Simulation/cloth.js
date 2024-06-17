@@ -27,7 +27,7 @@ class CLOTHSIM {
 
         this.stiffness = 0.001;
         this.substeps = 3; 
-        this.mode = 'DC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
+        this.mode = 'BC'; // 'DC' Apply only Distance Constraint 'BC' Apply Bending Constraint and Distance Constraint
 
         this.renderHelpers = true;
     }   
@@ -65,28 +65,28 @@ class CLOTHSIM {
         //Init Particle System
         this.particleSystem = new LinksSystem(this.scene);
 
-        //AVATAR Loader
-        // this.loaderGLB.load("https://webglstudio.org/3Dcharacters/Eva_Low/Eva_Low.glb", (gltf) => {
-        //     let model = gltf.scene;
-        //     model.name = "Eva";
-        //     model.visible = true;
+        // AVATAR Loader
+        this.loaderGLB.load("https://webglstudio.org/3Dcharacters/Eva_Low/Eva_Low.glb", (gltf) => {
+            let model = gltf.scene;
+            model.name = "Eva";
+            model.visible = true;
             
-        //     model.traverse( (o) => {
-        //         if (o.isMesh || o.isSkinnedMesh) {
-        //             o.castShadow = true;
-        //             o.receiveShadow = true;
-        //             o.frustumCulled = false;
-        //             if ( o.skeleton ) { 
-        //                 this.skeleton = o.skeleton;
-        //             }
-        //             if (o.name == "Body")
-        //                     o.name == "BodyMesh";
-        //             o.material.side = THREE.FrontSide;
-        //         }
-        //     } );
+            model.traverse( (o) => {
+                if (o.isMesh || o.isSkinnedMesh) {
+                    o.castShadow = true;
+                    o.receiveShadow = true;
+                    o.frustumCulled = false;
+                    if ( o.skeleton ) { 
+                        this.skeleton = o.skeleton;
+                    }
+                    if (o.name == "Body")
+                            o.name == "BodyMesh";
+                    o.material.side = THREE.FrontSide;
+                }
+            } );
 
-        //     this.scene.add( model );
-        // });
+            this.scene.add( model );
+        });
 
         //OBJ Loader
         this.loader = new OBJLoader();
@@ -99,8 +99,10 @@ class CLOTHSIM {
                 if (object.children[0] instanceof THREE.Mesh)
                     object.children[0].material.side = THREE.DoubleSide;
 
-                // object.position.set(0,1.40,-0.32);
-                object.position.set(0,1.2,0);
+                object.position.set(0,1.40,-0.32);
+                // object.position.set(0,1.2,0);
+                object.children[0].material.transparent = true;
+                object.children[0].material.opacity = 0;
 
                 object.updateMatrixWorld();
                 
@@ -223,6 +225,8 @@ class CLOTHSIM {
             }
 
             // this.updateVerticesFromParticles(this.geometry, this.particleSystem.particles);
+            // this.geometry.attributes.position.needsUpdate = true;
+
 
         }
         this.renderer.render(this.scene, this.camera);
@@ -274,22 +278,21 @@ class CLOTHSIM {
                 position.setXYZ(index, particle.pos.x, particle.pos.y, particle.pos.z);
             });
 
-            position.needsUpdate = true;
     }
 
     addRigidBodies()
     {
         const objectgroup = this.particleSystem.objectgroup;
         const rigidBodies = [
-            // new SphereBody(new THREE.Vector3(0, 1, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(0, 1.1, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(0, 1.2, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(0, 1.3, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(0.12, 1.3, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(-0.12, 1.3, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(0.1, 0.85, 0), 0.15, objectgroup),
-            // new SphereBody(new THREE.Vector3(-0.1, 0.85, 0), 0.15, objectgroup),
-            new SphereBody(new THREE.Vector3(0, 1, 0), 0.15, objectgroup)
+            new SphereBody(new THREE.Vector3(0, 1, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(0, 1.1, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(0, 1.2, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(0, 1.3, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(0.12, 1.3, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(-0.12, 1.3, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(0.1, 0.85, 0), 0.15, objectgroup),
+            new SphereBody(new THREE.Vector3(-0.1, 0.85, 0), 0.15, objectgroup),
+            // new SphereBody(new THREE.Vector3(0, 1, 0), 0.15, objectgroup)
         ];
 
         rigidBodies.forEach(rigidBody => this.particleSystem.addRigidBody(rigidBody));
