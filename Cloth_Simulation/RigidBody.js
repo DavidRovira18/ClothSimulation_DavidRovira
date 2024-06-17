@@ -36,6 +36,6 @@ export class SphereBody extends RigidBody{
         this.mesh = new Mesh(this.geometry, this.material);
 
         this.mesh.position.copy(this.center);
-        objectgroupR.add(this.mesh);
+        objectgroup.add(this.mesh);
     }
 }
