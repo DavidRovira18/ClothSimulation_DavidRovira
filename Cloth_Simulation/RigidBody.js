@@ -10,7 +10,7 @@ export class RigidBody{
 export class BoxBody extends RigidBody{
     constructor(min, max, objectgroup)
     {
-        super(scene, visible);
+        super();
         this.min = min;
         this.max = max;
         this.center = min.clone().add(max).multiplyScalar(0.5);
@@ -36,6 +36,6 @@ export class SphereBody extends RigidBody{
         this.mesh = new Mesh(this.geometry, this.material);
 
         this.mesh.position.copy(this.center);
-        objectgroup.add(this.mesh);
+        objectgroupR.add(this.mesh);
     }
 }
