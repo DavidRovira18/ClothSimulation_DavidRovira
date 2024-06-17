@@ -279,9 +279,8 @@ export class LinksSystem extends ParticleSystem{
         super(scene)
         this.linksDistanceConstraint = [];
         this.idLinksDistanceConstraint = [];
-        this.idLinksBendingConstraint = [];
         this.linksBendingConstraint = [];
-        this.scene = scene;
+        this.idLinksBendingConstraint = [];
     }
 
     addLinkDistanceConstraint(particle1, particle2, mode) //Create spring between particles
